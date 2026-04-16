@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Story 8 — Clinic Settings</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: '#185FA5',
+        'page-bg': '#f5f4ef',
+      },
+      fontFamily: { sans: ['Inter', 'sans-serif'] },
+    },
+  },
+}
+</script>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .anim-spin { animation: spin 1s linear infinite; }
+  @keyframes fadein { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .anim-fadein { animation: fadein 0.15s ease; }
+  @keyframes slide-up { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+  .anim-slide { animation: slide-up 0.2s ease; }
+  .progress-bar-clinic { background: #185FA5; }
+  .progress-bar-hicare { background: #bfdbfe; }
+</style>
+</head>
+<body class="bg-page-bg text-slate-900 antialiased h-screen flex flex-col overflow-hidden">
+
+<!-- ── Top Nav ── -->
+<header class="flex items-center gap-3 px-5 h-[52px] bg-white border-b border-slate-100 flex-shrink-0 z-40">
+  <div class="h-7 w-7 rounded-lg bg-primary flex items-center justify-center text-white text-sm">⚕</div>
+  <span class="text-sm font-semibold">Billing Assistant</span>
+  <div class="w-px h-4 bg-slate-200 mx-1"></div>
+  <span class="text-sm text-slate-500">Clinic Settings</span>
+  <nav class="ml-4 flex gap-1 text-xs font-medium text-slate-500">
+    <button class="px-3 py-1.5 rounded-md bg-blue-50 text-blue-700 font-semibold">Clinic Master</button>
+  </nav>
+  <div class="ml-auto flex items-center gap-4">
+    <!-- Sync Button -->
+    <button id="sync-btn" onclick="triggerSync()" class="flex flex-col items-center gap-0.5 group" title="Sync clinic data">
+      <span id="sync-icon" class="material-symbols-outlined text-[22px] text-slate-400 group-hover:text-blue-600 group-hover:rotate-180 transition-all duration-500">sync</span>
+      <span id="sync-label" class="text-[9px] text-slate-400 group-hover:text-blue-500 leading-none">10:32</span>
+    </button>
+    <div class="h-7 w-7 rounded-full bg-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-500">AK</div>
+  </div>
+</header>
+
+<!-- ── Body: Clinic List + Detail ── -->
+<div class="flex flex-1 overflow-hidden">
+
+  <!-- Left: Clinic List Panel -->
+  <aside class="w-[200px] flex-shrink-0 bg-white border-r border-slate-100 flex flex-col overflow-y-auto">
+    <div class="px-4 pt-4 pb-2">
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-2">Clinics</p>
+    </div>
+    <div id="clinic-list" class="px-2 space-y-1 pb-4">
+      <!-- items rendered by JS -->
+    </div>
+  </aside>
+
+  <!-- Right: Clinic Detail -->
+  <section class="flex-1 overflow-y-auto">
+    <div class="max-w-3xl mx-auto p-8 space-y-5">
+
+      <!-- Clinic Header Card -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 flex items-center gap-5">
+        <div class="h-14 w-14 rounded-xl bg-primary flex items-center justify-center text-white shadow-md flex-shrink-0">
+          <span class="material-symbols-outlined text-2xl icon-filled">local_hospital</span>
+        </div>
+        <div class="flex-1">
+          <h2 id="clinic-name-h" class="text-2xl font-bold tracking-tight text-slate-900">Sunrise Family Clinic</h2>
+          <div class="flex items-center gap-2 mt-1.5 flex-wrap" id="clinic-badges">
+            <!-- rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ① Basic Information -->
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div class="flex items-center gap-2 px-5 py-3 border-b border-slate-100">
+          <span class="material-symbols-outlined text-[18px] text-slate-400">location_on</span>
+          <span class="text-sm font-semibold text-slate-700">Basic Information</span>
+          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full font-medium">
+            <span class="material-symbols-outlined text-[12px]">lock</span>Read-only · synced
+          </span>
+        </div>
+        <div class="p-5 grid grid-cols-2 gap-x-8 gap-y-5" id="basic-info">
+          <!-- rendered by JS -->
+        </div>
+      </div>
+
+      <!-- ② Service Type -->
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div class="flex items-center gap-2 px-5 py-3 border-b border-slate-100">
+          <span class="material-symbols-outlined text-[18px] text-slate-400">list_alt</span>
+          <span class="text-sm font-semibold text-slate-700">Service Type</span>
+          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full font-medium">
+            <span class="material-symbols-outlined text-[12px]">lock</span>Read-only · synced
+          </span>
+        </div>
+        <div class="p-5">
+          <div class="flex gap-3 flex-wrap" id="service-type-tiles"><!-- rendered by JS --></div>
+          <p class="text-[11px] text-slate-400 mt-3">활성 서비스만 Invoice 입력 및 Revenue Split 테이블에 표시됩니다.</p>
+        </div>
+      </div>
+
+      <!-- ③ Revenue Split -->
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div class="flex items-center gap-2 px-5 py-3 border-b border-slate-100">
+          <span class="material-symbols-outlined text-[18px] text-slate-400">account_balance</span>
+          <span class="text-sm font-semibold text-slate-700">Revenue Split (Clinic : Hicare)</span>
+          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full font-medium">
+            <span class="material-symbols-outlined text-[12px]">lock</span>Read-only · synced
+          </span>
+        </div>
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-100">
+              <th class="text-left text-[11px] font-semibold text-slate-400 px-5 py-2.5 w-24">Service</th>
+              <th class="text-left text-[11px] font-semibold text-slate-400 px-5 py-2.5">Split</th>
+              <th class="text-left text-[11px] font-semibold text-slate-400 px-5 py-2.5 w-32">Effective From</th>
+              <th class="text-right text-[11px] font-semibold text-slate-400 px-5 py-2.5 w-28"></th>
+            </tr>
+          </thead>
+          <tbody id="split-table"><!-- rendered by JS --></tbody>
+        </table>
+      </div>
+
+      <!-- ④ Biller Fee -->
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div class="flex items-center gap-2 px-5 py-3 border-b border-slate-100">
+          <span class="material-symbols-outlined text-[18px] text-slate-400">receipt</span>
+          <span class="text-sm font-semibold text-slate-700">Biller Fee</span>
+          <span class="ml-auto flex items-center gap-1 text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full font-medium">
+            <span class="material-symbols-outlined text-[12px]">lock</span>Read-only · synced
+          </span>
+        </div>
+        <div class="p-5">
+          <div class="grid grid-cols-3 gap-8 items-end" id="biller-fee-detail"><!-- rendered by JS --></div>
+          <div class="mt-4 flex justify-end">
+            <button onclick="openModal('fee')" class="text-xs text-slate-500 hover:text-primary px-3 py-1.5 rounded-lg hover:bg-slate-50 transition font-medium">
+              View history
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ⑤ EMR Access -->
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div class="flex items-center gap-2 px-5 py-3 border-b border-slate-100">
+          <span class="material-symbols-outlined text-[18px] text-slate-400">terminal</span>
+          <span class="text-sm font-semibold text-slate-700">EMR Access</span>
+          <span class="ml-auto flex items-center gap-1 text-[10px] text-green-700 bg-green-50 px-2 py-0.5 rounded-full font-bold">
+            <span class="material-symbols-outlined text-[12px]">edit</span>Editable
+          </span>
+        </div>
+        <div class="p-5">
+          <div class="space-y-2 mb-4" id="emr-list"><!-- rendered by JS --></div>
+          <!-- Add row -->
+          <div class="flex items-center gap-3 pt-3 border-t border-slate-100">
+            <input id="new-emr-name" type="text" placeholder="EMR name"
+              class="w-32 text-sm px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"/>
+            <input id="new-emr-url" type="text" placeholder="https://..."
+              class="flex-1 text-sm px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"/>
+            <button onclick="addEmr()"
+              class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition">
+              <span class="material-symbols-outlined text-sm">add</span>Add EMR
+            </button>
+          </div>
+          <!-- Save / Cancel -->
+          <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
+            <button onclick="cancelEmr()" class="px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition font-medium">Cancel</button>
+            <button onclick="saveEmr()" class="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-blue-700 rounded-lg transition">Save EMR links</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</div><!-- /body -->
+
+
+<!-- ══ History Modal ══ -->
+<div id="modal-backdrop" class="hidden fixed inset-0 bg-black/20 backdrop-blur-[2px] z-50 flex items-center justify-center" onclick="closeModal(event)">
+  <div class="bg-white rounded-2xl shadow-2xl w-[480px] max-h-[80vh] flex flex-col anim-slide" onclick="event.stopPropagation()">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+      <div>
+        <h3 id="modal-title" class="text-base font-semibold text-slate-900">History</h3>
+        <p class="text-[11px] text-slate-400 mt-0.5">변경 이력 (소급 적용 없음)</p>
+      </div>
+      <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition">
+        <span class="material-symbols-outlined text-xl">close</span>
+      </button>
+    </div>
+    <div id="modal-body" class="p-5 overflow-y-auto space-y-3"></div>
+  </div>
+</div>
+
+
+<!-- ══ Toast ══ -->
+<div id="toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-50 anim-fadein">
+  <div id="toast-inner" class="flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium">
+    <span id="toast-icon" class="material-symbols-outlined text-lg icon-filled"></span>
+    <span id="toast-msg"></span>
+  </div>
+</div>
+
+
+<script>
+// ══ Dummy Data ══════════════════════════════════════════════════════════════
+const CLINICS = [
+  {
+    id: 1,
+    name: 'Sunrise Family Clinic',
+    code: 'SUN',
+    state: 'CA',
+    timezone: 'America/Los_Angeles',
+    phone: '(949) 555-0182',
+    address: '1234 Sunset Blvd Suite 100, Irvine CA 92618',
+    contactName: 'Dr. James Park',
+    ein: '83-1234567',
+    npi: '1234567890',
+    taxonomyCode: '207Q00000X',
+    posCode: '11',
+    acceptAssignment: true,
+    serviceTypes: ['RPM', 'CCM'],
+    isActive: true,
+    lastSyncedAt: '2026-04-15T10:32:00',
+    emrLinks: [
+      { name: 'eClinicalWorks', url: 'https://ecw.example.com/login' },
+      { name: 'Patient Portal', url: 'https://portal.example.com' },
+    ],
+    revenueSplitHistory: [
+      { id:'s1', serviceType:'RPM', clinicPct:70, hicarePct:30, effectiveFrom:'2025-01-01', changedAt:'2025-01-01T00:00:00' },
+      { id:'s2', serviceType:'RPM', clinicPct:65, hicarePct:35, effectiveFrom:'2024-01-01', changedAt:'2024-01-01T00:00:00' },
+      { id:'s3', serviceType:'CCM', clinicPct:65, hicarePct:35, effectiveFrom:'2025-01-01', changedAt:'2025-01-01T00:00:00' },
+      { id:'s4', serviceType:'CCM', clinicPct:60, hicarePct:40, effectiveFrom:'2024-01-01', changedAt:'2024-01-01T00:00:00' },
+    ],
+    billerFeeHistory: [
+      { id:'f1', feeType:'pct', feeValue:4, effectiveFrom:'2025-01-01', note:'Standard biller fee — reviewed annually', changedAt:'2025-01-01T00:00:00' },
+      { id:'f2', feeType:'pct', feeValue:5, effectiveFrom:'2024-01-01', note:null, changedAt:'2024-01-01T00:00:00' },
+    ],
+  },
+  {
+    id: 2,
+    name: 'Pacific Medical Center',
+    code: 'PAC',
+    state: 'CA',
+    timezone: 'America/Los_Angeles',
+    phone: '(310) 555-0091',
+    address: '888 Ocean Ave, Santa Monica CA 90401',
+    contactName: 'Dr. Linda Choi',
+    ein: '47-2345678',
+    npi: '9876543210',
+    taxonomyCode: '208D00000X',
+    posCode: '11',
+    acceptAssignment: true,
+    serviceTypes: ['CCM'],
+    isActive: true,
+    lastSyncedAt: '2026-04-14T09:15:00',
+    emrLinks: [
+      { name: 'Athena', url: 'https://athena.example.com' },
+    ],
+    revenueSplitHistory: [
+      { id:'s5', serviceType:'CCM', clinicPct:60, hicarePct:40, effectiveFrom:'2025-03-01', changedAt:'2025-03-01T00:00:00' },
+    ],
+    billerFeeHistory: [
+      { id:'f3', feeType:'fixed', feeValue:200, effectiveFrom:'2025-03-01', note:'Fixed monthly fee', changedAt:'2025-03-01T00:00:00' },
+    ],
+  },
+  {
+    id: 3,
+    name: 'Harbor Health Associates',
+    code: 'HAR',
+    state: 'TX',
+    timezone: 'America/Chicago',
+    phone: '(713) 555-0044',
+    address: '500 Harbor Loop, Houston TX 77002',
+    contactName: 'Dr. Mark Rivera',
+    ein: '52-3456789',
+    npi: '1122334455',
+    taxonomyCode: '207Q00000X',
+    posCode: '11',
+    acceptAssignment: false,
+    serviceTypes: ['RPM'],
+    isActive: false,
+    lastSyncedAt: null,
+    emrLinks: [],
+    revenueSplitHistory: [
+      { id:'s6', serviceType:'RPM', clinicPct:75, hicarePct:25, effectiveFrom:'2024-06-01', changedAt:'2024-06-01T00:00:00' },
+    ],
+    billerFeeHistory: [
+      { id:'f4', feeType:'pct', feeValue:3.5, effectiveFrom:'2024-06-01', note:null, changedAt:'2024-06-01T00:00:00' },
+    ],
+  },
+]
+
+// ══ State ═══════════════════════════════════════════════════════════════════
+let activeId = 1
+let emrLinks = []  // working copy
+
+// ══ Init ════════════════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  renderClinicList()
+  selectClinic(activeId)
+})
+
+// ══ Clinic List ═════════════════════════════════════════════════════════════
+function renderClinicList() {
+  const el = document.getElementById('clinic-list')
+  el.innerHTML = CLINICS.map(c => `
+    <button onclick="selectClinic(${c.id})"
+      id="clinic-btn-${c.id}"
+      class="w-full text-left px-3 py-2.5 rounded-lg text-xs transition group flex items-center gap-2.5 ${c.id === activeId ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-50'}">
+      <span class="w-1.5 h-1.5 rounded-full flex-shrink-0 ${c.isActive ? 'bg-emerald-500' : 'bg-slate-300'}"></span>
+      <span class="flex-1 truncate">${c.name}</span>
+    </button>
+  `).join('')
+}
+
+function selectClinic(id) {
+  activeId = id
+  const clinic = CLINICS.find(c => c.id === id)
+  emrLinks = clinic.emrLinks.map((e, i) => ({ ...e, _key: i }))
+  renderClinicList()
+  renderDetail(clinic)
+}
+
+// ══ Detail Render ════════════════════════════════════════════════════════════
+function renderDetail(clinic) {
+  // Header
+  document.getElementById('clinic-name-h').textContent = clinic.name
+  document.getElementById('clinic-badges').innerHTML = `
+    <span class="text-xs font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg">${clinic.code}</span>
+    <span class="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-semibold ${clinic.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-400'}">
+      <span class="w-1.5 h-1.5 rounded-full ${clinic.isActive ? 'bg-emerald-500' : 'bg-slate-400'}"></span>
+      ${clinic.isActive ? 'Active Provider' : 'Inactive'}
+    </span>
+    ${clinic.serviceTypes.map(s => `
+      <span class="text-xs px-2 py-0.5 rounded-full font-semibold ${s === 'RPM' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}">${s}</span>
+    `).join('')}
+  `
+
+  // Sync label
+  const syncLabel = document.getElementById('sync-label')
+  if (clinic.lastSyncedAt) {
+    const d = new Date(clinic.lastSyncedAt)
+    syncLabel.textContent = `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+  } else {
+    syncLabel.textContent = 'Never'
+  }
+
+  // Basic Info
+  const fields = [
+    { label:'Clinic Name',    value: clinic.name },
+    { label:'Clinic Code',    value: clinic.code, mono:true },
+    { label:'Contact Name',   value: clinic.contactName },
+    { label:'Phone',          value: clinic.phone },
+    { label:'Timezone',       value: clinic.timezone },
+    { label:'State',          value: clinic.state },
+    { label:'EIN',            value: clinic.ein, mono:true },
+    { label:'NPI',            value: clinic.npi, mono:true },
+    { label:'Taxonomy Code',  value: clinic.taxonomyCode, mono:true },
+    { label:'POS Code',       value: clinic.posCode, mono:true },
+    { label:'Accept Assignment', value: clinic.acceptAssignment ? 'Yes' : 'No', colSpan:2 },
+    { label:'Address',        value: clinic.address, colSpan:2 },
+  ]
+  document.getElementById('basic-info').innerHTML = fields.map(f => `
+    <div class="${f.colSpan === 2 ? 'col-span-2' : ''}">
+      <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">${f.label}</p>
+      <p class="text-sm bg-slate-50 px-2.5 py-1.5 rounded-lg ${f.mono ? 'font-mono text-xs' : ''} text-slate-700">${f.value ?? '—'}</p>
+    </div>
+  `).join('')
+
+  // Service Type
+  const allSvcs = ['RPM','CCM','BHI','PCM']
+  document.getElementById('service-type-tiles').innerHTML = allSvcs.map(svc => {
+    const active = clinic.serviceTypes.includes(svc)
+    const color = svc === 'RPM' ? 'bg-blue-100 text-blue-700' : svc === 'CCM' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-400'
+    return `
+      <div class="flex items-center gap-3 px-4 py-2.5 rounded-xl border ${active ? 'bg-white border-slate-200' : 'bg-slate-50 border-slate-100 opacity-40'}">
+        <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${active ? color : 'bg-slate-100 text-slate-400'}">${svc}</span>
+      </div>
+    `
+  }).join('')
+
+  // Revenue Split
+  const splitRows = clinic.serviceTypes.filter(s => ['RPM','CCM'].includes(s)).map(svc => {
+    const current = clinic.revenueSplitHistory.find(r => r.serviceType === svc)
+    return `
+      <tr class="border-b border-slate-50 hover:bg-slate-50/50 transition">
+        <td class="px-5 py-3">
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${svc === 'RPM' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}">${svc}</span>
+        </td>
+        <td class="px-5 py-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Clinic ${current?.clinicPct ?? 0}%</span>
+            <span class="text-xs font-semibold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Hicare ${current?.hicarePct ?? 0}%</span>
+          </div>
+          <div class="mt-2 h-1.5 w-36 bg-slate-100 rounded-full overflow-hidden flex">
+            <div class="h-full progress-bar-clinic" style="width:${current?.clinicPct ?? 0}%"></div>
+            <div class="h-full progress-bar-hicare" style="width:${current?.hicarePct ?? 0}%"></div>
+          </div>
+        </td>
+        <td class="px-5 py-3 font-mono text-xs text-slate-400">${current?.effectiveFrom ?? '—'}</td>
+        <td class="px-5 py-3 text-right">
+          <button onclick="openModal('${svc}')" class="text-xs text-slate-500 hover:text-primary px-3 py-1.5 rounded-lg hover:bg-slate-50 transition font-medium">View history</button>
+        </td>
+      </tr>
+    `
+  }).join('')
+  document.getElementById('split-table').innerHTML = splitRows
+
+  // Biller Fee
+  const fee = clinic.billerFeeHistory[0]
+  document.getElementById('biller-fee-detail').innerHTML = fee ? `
+    <div>
+      <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Fee Type</p>
+      <p class="text-sm bg-slate-50 px-2.5 py-1.5 rounded-lg text-slate-700">${fee.feeType === 'pct' ? 'Percentage (%)' : 'Fixed ($/mo)'}</p>
+    </div>
+    <div>
+      <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Fee Value</p>
+      <p class="text-2xl font-extrabold text-slate-900 mt-1">${fee.feeType === 'pct' ? `${Math.abs(fee.feeValue)}%` : `$${Math.abs(fee.feeValue)}/mo`}</p>
+    </div>
+    <div>
+      <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Effective From</p>
+      <p class="text-sm font-mono bg-slate-50 px-2.5 py-1.5 rounded-lg text-slate-600">${fee.effectiveFrom}</p>
+    </div>
+    ${fee.note ? `<div class="col-span-3 text-[11px] text-slate-500 bg-slate-50 rounded-lg p-3 -mt-2">${fee.note}</div>` : ''}
+  ` : '<p class="text-slate-400 text-sm">—</p>'
+
+  // EMR
+  renderEmrList()
+}
+
+// ══ EMR ═════════════════════════════════════════════════════════════════════
+function renderEmrList() {
+  const el = document.getElementById('emr-list')
+  if (emrLinks.length === 0) {
+    el.innerHTML = '<p class="text-xs text-slate-400 py-2">EMR 링크가 없습니다. 아래에서 추가하세요.</p>'
+    return
+  }
+  el.innerHTML = emrLinks.map(emr => `
+    <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg group hover:bg-slate-100 transition">
+      <span class="material-symbols-outlined text-slate-400 text-sm flex-shrink-0">link</span>
+      <span class="w-28 text-sm font-semibold text-slate-700 flex-shrink-0">${emr.name}</span>
+      <input
+        class="flex-1 text-xs font-mono bg-transparent border-none outline-none text-primary focus:bg-white focus:px-2 focus:border focus:border-blue-300 focus:rounded transition-all"
+        value="${emr.url}"
+        onchange="updateEmrUrl(${emr._key}, this.value)"/>
+      <button onclick="window.open('${emr.url}','_blank')" class="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white transition">
+        <span class="material-symbols-outlined text-slate-400 text-sm">open_in_new</span>
+      </button>
+      <button onclick="removeEmr(${emr._key})" class="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white hover:text-red-500 transition">
+        <span class="material-symbols-outlined text-slate-400 text-sm">close</span>
+      </button>
+    </div>
+  `).join('')
+}
+
+function updateEmrUrl(key, value) {
+  emrLinks = emrLinks.map(e => e._key === key ? { ...e, url: value } : e)
+}
+
+function addEmr() {
+  const nameEl = document.getElementById('new-emr-name')
+  const urlEl  = document.getElementById('new-emr-url')
+  const name = nameEl.value.trim()
+  const url  = urlEl.value.trim()
+  if (!name || !url) { showToast('EMR name and URL are required', 'error'); return }
+  emrLinks = [...emrLinks, { name, url, _key: Date.now() }]
+  nameEl.value = ''
+  urlEl.value  = ''
+  renderEmrList()
+}
+
+function removeEmr(key) {
+  emrLinks = emrLinks.filter(e => e._key !== key)
+  renderEmrList()
+}
+
+function cancelEmr() {
+  const clinic = CLINICS.find(c => c.id === activeId)
+  emrLinks = clinic.emrLinks.map((e, i) => ({ ...e, _key: i }))
+  renderEmrList()
+  showToast('Changes discarded')
+}
+
+function saveEmr() {
+  // mockup: just show toast
+  const clinic = CLINICS.find(c => c.id === activeId)
+  clinic.emrLinks = emrLinks.map(({ name, url }) => ({ name, url }))
+  showToast('EMR links saved')
+}
+
+// ══ History Modal ═══════════════════════════════════════════════════════════
+function openModal(type) {
+  const clinic = CLINICS.find(c => c.id === activeId)
+
+  let title, rows
+  if (type === 'fee') {
+    title = 'Biller Fee History'
+    rows  = clinic.billerFeeHistory
+  } else {
+    title = `${type} Split History`
+    rows  = clinic.revenueSplitHistory.filter(r => r.serviceType === type)
+  }
+
+  document.getElementById('modal-title').textContent = title
+
+  const body = rows.length === 0
+    ? '<p class="text-sm text-slate-400 text-center py-4">이력 없음</p>'
+    : rows.map((row, idx) => {
+        const from = row.effectiveFrom
+        const to   = idx > 0 ? rows[idx-1].effectiveFrom : '현재'
+        const period = `${from} ~ ${to}`
+        const changed = new Date(row.changedAt).toLocaleDateString('en-US')
+        const isCurrent = idx === 0
+
+        let detail
+        if (type === 'fee') {
+          detail = `<span class="text-sm font-bold text-slate-800">${row.feeType === 'pct' ? 'Percentage' : 'Fixed'} · ${row.feeType === 'pct' ? Math.abs(row.feeValue)+'%' : '$'+Math.abs(row.feeValue)+'/mo'}</span>`
+        } else {
+          detail = `
+            <span class="text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">Clinic ${row.clinicPct}%</span>
+            <span class="text-xs font-semibold bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Hicare ${row.hicarePct}%</span>
+          `
+        }
+
+        return `
+          <div class="flex gap-3 p-3 rounded-lg ${isCurrent ? 'bg-blue-50/60 border border-blue-100' : 'bg-slate-50'}">
+            <span class="h-2 w-2 rounded-full mt-1.5 flex-shrink-0 ${isCurrent ? 'bg-primary' : 'bg-slate-300'}"></span>
+            <div class="flex-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                ${detail}
+                ${isCurrent ? '<span class="text-xs font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full">현재 적용</span>' : ''}
+              </div>
+              <p class="text-[10px] text-slate-400 mt-1">${period} · 변경일 ${changed}</p>
+            </div>
+          </div>
+        `
+      }).join('')
+
+  document.getElementById('modal-body').innerHTML = body
+  document.getElementById('modal-backdrop').classList.remove('hidden')
+}
+
+function closeModal(e) {
+  if (e && e.target !== document.getElementById('modal-backdrop')) return
+  document.getElementById('modal-backdrop').classList.add('hidden')
+}
+
+// ══ Sync ════════════════════════════════════════════════════════════════════
+function triggerSync() {
+  const icon = document.getElementById('sync-icon')
+  icon.classList.add('anim-spin')
+  setTimeout(() => {
+    icon.classList.remove('anim-spin')
+    const now = new Date()
+    document.getElementById('sync-label').textContent =
+      `${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
+    showToast('Sync complete — data updated')
+  }, 1800)
+}
+
+// ══ Toast ════════════════════════════════════════════════════════════════════
+let toastTimer
+function showToast(msg, variant = 'success') {
+  clearTimeout(toastTimer)
+  const el    = document.getElementById('toast')
+  const inner = document.getElementById('toast-inner')
+  const icon  = document.getElementById('toast-icon')
+  const msgEl = document.getElementById('toast-msg')
+
+  if (variant === 'success') {
+    inner.className = 'flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium bg-slate-900 text-white'
+    icon.textContent = 'check_circle'
+    icon.className = 'material-symbols-outlined text-lg icon-filled text-emerald-400'
+  } else {
+    inner.className = 'flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-sm font-medium bg-red-600 text-white'
+    icon.textContent = 'error'
+    icon.className = 'material-symbols-outlined text-lg icon-filled text-red-200'
+  }
+  msgEl.textContent = msg
+  el.classList.remove('hidden')
+  toastTimer = setTimeout(() => el.classList.add('hidden'), 2800)
+}
+</script>
+</body>
+</html>
