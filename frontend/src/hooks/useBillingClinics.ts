@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { BILLING_CLINICS } from '../pages/billing/data'
 import type { BillingClinic } from '../pages/billing/data'
 
-const API_BASE = 'http://localhost:3001/api'
+const API_BASE = '/api'
 
 interface ApiClinic { id: string; code: string }
 

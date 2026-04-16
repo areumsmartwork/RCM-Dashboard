@@ -6,6 +6,7 @@ import { InvoiceEntryTab }   from './billing/InvoiceEntryTab'
 import { EntryHistoryTab }   from './billing/EntryHistoryTab'
 import { useBillingClinics } from '../hooks/useBillingClinics'
 import { useInvoiceEntries } from '../hooks/useInvoiceEntries'
+import { useBillingSettings } from '../hooks/useBillingSettings'
 import type { SaveCiPayload } from '../hooks/useInvoiceEntries'
 
 const TABS = [
@@ -19,6 +20,10 @@ export function BillingPage() {
   const [activeTab, setActiveTab] = useState('invoice')
 
   const clinic = clinics.find(c => c.id === activeId) ?? clinics[0]
+
+  // DB에서 현재 split 비율 / biller fee 조회 → mock 데이터 override
+  const dbSettings = useBillingSettings(clinic.dbId)
+  const effectiveClinic = dbSettings ? { ...clinic, ...dbSettings } : clinic
 
   // 선택된 클리닉의 DB UUID로 invoice 내역 관리
   const { records, loading, saveInvoice, saveCi } = useInvoiceEntries(clinic.dbId)
@@ -79,7 +84,7 @@ export function BillingPage() {
         <div className="flex-1 overflow-y-auto">
           {activeTab === 'invoice' && (
             <InvoiceEntryTab
-              clinic={clinic}
+              clinic={effectiveClinic}
               records={records}
               onSaveInvoice={handleSaveInvoice}
               onSaveCi={handleSaveCi}
@@ -87,7 +92,7 @@ export function BillingPage() {
           )}
           {activeTab === 'history' && (
             <EntryHistoryTab
-              clinic={clinic}
+              clinic={effectiveClinic}
               records={records}
               loading={loading}
             />

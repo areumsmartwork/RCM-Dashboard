@@ -7,4 +7,10 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+  server: {
+    // /api/* 요청을 백엔드(3001)로 프록시 → 브라우저 CORS 우회
+    proxy: {
+      '/api': 'http://localhost:3001',
+    },
+  },
 })

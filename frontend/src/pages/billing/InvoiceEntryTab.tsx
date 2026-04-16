@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button, Card, CardHeader, CardBody } from '../../components/ui'
 import { type BillingClinic, type InvoiceEntryRecord, fmt } from './data'
 import type { SaveCiPayload } from '../../hooks/useInvoiceEntries'
@@ -378,25 +378,67 @@ export function InvoiceEntryTab({ clinic, records, onSaveInvoice, onSaveCi }: In
   const [ccmInvoice,    setCcmInvoice]   = useState('')
   const [rpmPts,        setRpmPts]       = useState('')
   const [ccmPts,        setCcmPts]       = useState('')
-  const [invoiceSaved,  setInvoiceSaved] = useState(false)
-  const [saving,        setSaving]       = useState(false)
+  const [isDirty,       setIsDirty]      = useState(false)
+  const [autoSaveState, setAutoSaveState] = useState<'idle' | 'saving' | 'saved'>('idle')
+
+  // stale closure 방지용 ref
+  const onSaveRef = useRef(onSaveInvoice)
+  useEffect(() => { onSaveRef.current = onSaveInvoice })
+
+  const yearRef  = useRef(0)
+  const monthRef = useRef(0)
 
   const { year, month } = offsetMonth(monthOffset)
   const monthLabel = MONTHS[month - 1] + ' ' + year
+
+  // year/month ref 동기화
+  useEffect(() => {
+    yearRef.current  = year
+    monthRef.current = month
+  }, [year, month])
 
   // 해당 월 DB 레코드
   const currentEntry = records.find(r => r.billingYear === year && r.billingMonth === month) ?? null
   const isPaid       = currentEntry?.status === 'paid'
 
-  // 월이 바뀌면 DB 값으로 폼 초기화
+  // 월이 바뀌면 DB 값으로 폼 초기화, dirty 리셋
   useEffect(() => {
     setRpmInvoice(currentEntry?.rpmInvoice != null ? String(currentEntry.rpmInvoice) : '')
     setCcmInvoice(currentEntry?.ccmInvoice != null ? String(currentEntry.ccmInvoice) : '')
     setRpmPts(currentEntry?.rpmPts != null ? String(currentEntry.rpmPts) : '')
     setCcmPts(currentEntry?.ccmPts != null ? String(currentEntry.ccmPts) : '')
+    setIsDirty(false)
+    setAutoSaveState('idle')
   // 의도적으로 year/month/entry ID 변경 시에만 폼 초기화
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [year, month, currentEntry?.id])
+
+  // 입력 변경 시 800ms debounce 자동 저장
+  useEffect(() => {
+    if (!isDirty) return
+    const rpm = parseFloat(rpmInvoice) || 0
+    const ccm = parseFloat(ccmInvoice) || 0
+    if (!rpm && !ccm) return   // 두 값 모두 비어있으면 저장 안 함
+
+    setAutoSaveState('saving')
+    const timer = setTimeout(async () => {
+      try {
+        await onSaveRef.current(yearRef.current, monthRef.current, {
+          rpmInvoice: rpm,
+          ccmInvoice: ccm,
+          rpmPts:     parseFloat(rpmPts) || 0,
+          ccmPts:     parseFloat(ccmPts) || 0,
+        })
+        setIsDirty(false)
+        setAutoSaveState('saved')
+        setTimeout(() => setAutoSaveState('idle'), 2000)
+      } catch {
+        setAutoSaveState('idle')
+      }
+    }, 800)
+
+    return () => clearTimeout(timer)
+  }, [rpmInvoice, ccmInvoice, rpmPts, ccmPts, isDirty])
 
   const rpm      = parseFloat(rpmInvoice) || 0
   const ccm      = parseFloat(ccmInvoice) || 0
@@ -421,21 +463,11 @@ export function InvoiceEntryTab({ clinic, records, onSaveInvoice, onSaveCi }: In
 
   const infoText = `Split ratios from clinic settings · RPM ${clinic.rpmSplit[0]}/${clinic.rpmSplit[1]} · CCM ${clinic.ccmSplit[0]}/${clinic.ccmSplit[1]} · ${clinic.billerFeeType === 'pct' ? `Biller fee ${clinic.billerFeeVal}%` : `Biller fee $${clinic.billerFeeVal} fixed`}`
 
-  async function handleSaveInvoice() {
-    setSaving(true)
-    try {
-      await onSaveInvoice(year, month, {
-        rpmInvoice: rpm,
-        ccmInvoice: ccm,
-        rpmPts:     parseFloat(rpmPts) || 0,
-        ccmPts:     parseFloat(ccmPts) || 0,
-      })
-      setInvoiceSaved(true)
-      setTimeout(() => setInvoiceSaved(false), 2000)
-    } finally {
-      setSaving(false)
-    }
-  }
+  // 입력 핸들러: 값 세팅 + dirty 표시
+  const handleRpmInvoice = (v: string) => { setRpmInvoice(v); setIsDirty(true) }
+  const handleCcmInvoice = (v: string) => { setCcmInvoice(v); setIsDirty(true) }
+  const handleRpmPts     = (v: string) => { setRpmPts(v);     setIsDirty(true) }
+  const handleCcmPts     = (v: string) => { setCcmPts(v);     setIsDirty(true) }
 
   return (
     <div className="flex flex-col gap-3.5 px-6 py-5">
@@ -447,9 +479,31 @@ export function InvoiceEntryTab({ clinic, records, onSaveInvoice, onSaveCi }: In
         <span className="text-[14px] font-semibold text-slate-700 min-w-[120px] text-center">{monthLabel}</span>
         <button onClick={() => setMonthOffset(v => v + 1)}
           className="w-7 h-7 border border-slate-200 rounded-md text-slate-500 hover:bg-slate-50 flex items-center justify-center cursor-pointer bg-white">›</button>
+        {monthOffset !== 0 && (
+          <button
+            onClick={() => setMonthOffset(0)}
+            className="text-[11px] text-slate-400 hover:text-slate-600 cursor-pointer bg-transparent border-none px-1"
+            title="Go to current month"
+          >
+            Today
+          </button>
+        )}
         <span className={`text-[11px] px-2.5 py-1 rounded-full ${isPaid ? 'bg-[#EAF3DE] text-[#27500A]' : 'bg-[#FCEBEB] text-[#791F1F]'}`}>
           {isPaid ? 'Paid' : 'Unpaid'}
         </span>
+        {/* 자동 저장 상태 표시 */}
+        {autoSaveState === 'saving' && (
+          <span className="ml-auto flex items-center gap-1 text-[11px] text-slate-400">
+            <span className="material-symbols-outlined text-[14px] animate-spin">progress_activity</span>
+            Saving…
+          </span>
+        )}
+        {autoSaveState === 'saved' && (
+          <span className="ml-auto flex items-center gap-1 text-[11px] text-[#27500A]">
+            <span className="material-symbols-outlined text-[14px]">check_circle</span>
+            Saved
+          </span>
+        )}
       </div>
 
       {/* Invoice */}
@@ -462,7 +516,7 @@ export function InvoiceEntryTab({ clinic, records, onSaveInvoice, onSaveCi }: In
             disabled={!clinic.services.includes('RPM')}
             invoice={rpmInvoice} pts={rpmPts}
             calcRows={rpmCalcRows}
-            onInvoice={setRpmInvoice} onPts={setRpmPts}
+            onInvoice={handleRpmInvoice} onPts={handleRpmPts}
           />
           <ServiceBlock
             type="CCM"
@@ -470,7 +524,7 @@ export function InvoiceEntryTab({ clinic, records, onSaveInvoice, onSaveCi }: In
             disabled={!clinic.services.includes('CCM')}
             invoice={ccmInvoice} pts={ccmPts}
             calcRows={ccmCalcRows}
-            onInvoice={setCcmInvoice} onPts={setCcmPts}
+            onInvoice={handleCcmInvoice} onPts={handleCcmPts}
           />
 
           {total > 0 && (
@@ -506,19 +560,7 @@ export function InvoiceEntryTab({ clinic, records, onSaveInvoice, onSaveCi }: In
         </CardBody>
       </Card>
 
-      {/* Footer */}
-      <div className="flex items-center justify-end gap-2.5 pb-6">
-        {invoiceSaved && (
-          <span className="flex items-center gap-1 text-[12px] text-[#27500A]">
-            <span className="material-symbols-outlined text-[14px]">check_circle</span>
-            Saved
-          </span>
-        )}
-        <Button variant="ghost" size="sm" onClick={() => setMonthOffset(0)}>Reset month</Button>
-        <Button variant="secondary" size="sm" onClick={handleSaveInvoice} disabled={saving}>
-          {saving ? 'Saving…' : 'Save entry'}
-        </Button>
-      </div>
+      <div className="pb-6" />
     </div>
   )
 }
