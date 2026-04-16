@@ -1,524 +1,805 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Story 5+6 — Billing &amp; Settlement</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        primary: '#185FA5',
+        'page-bg': '#f5f4ef',
+      },
+      fontFamily: { sans: ['Inter', 'sans-serif'] },
+    },
+  },
+}
+</script>
 <style>
-  :root {
-    --font-sans: -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    --font-mono: "SF Mono", "Fira Code", monospace;
-    --color-text-primary: #1a1918;
-    --color-text-secondary: #5f5e5a;
-    --color-text-tertiary: #9e9c97;
-    --color-text-success: #27500a;
-    --color-text-danger: #791f1f;
-    --color-background-primary: #ffffff;
-    --color-background-secondary: #fdfcf8;
-    --color-border-secondary: #ddd6c5;
-    --color-border-tertiary:  #ede8db;
-    --border-radius-md: 6px;
-    --border-radius-lg: 10px;
-  }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-.root { font-family: var(--font-sans); color: var(--color-text-primary); }
-.topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-.topbar h2 { font-size: 17px; font-weight: 500; }
-.month-nav { display: flex; align-items: center; gap: 6px; }
-.month-nav button { background: none; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 4px 10px; cursor: pointer; color: var(--color-text-secondary); font-size: 13px; }
-.month-nav span { font-weight: 500; min-width: 96px; text-align: center; font-size: 14px; }
-.tabs { display: flex; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 20px; }
-.tab { font-size: 13px; padding: 9px 20px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--color-text-secondary); background: none; border-top: none; border-left: none; border-right: none; transition: all 0.15s; }
-.tab.active { color: var(--color-text-primary); border-bottom-color: #185FA5; font-weight: 500; }
-.tab-panel { display: none; }
-.tab-panel.active { display: block; }
-.badge { font-size: 11px; padding: 2px 7px; border-radius: var(--border-radius-md); display: inline-block; white-space: nowrap; }
-.b-unpaid   { background: #E6F1FB; color: #0C447C; }
-.b-partial  { background: #FAEEDA; color: #633806; }
-.b-paid     { background: #EAF3DE; color: #27500A; }
-.b-settled  { background: #E1F5EE; color: #085041; }
-.b-void     { background: #FCEBEB; color: #791F1F; }
-.b-reissue  { background: #FAEEDA; color: #633806; border: 0.5px dashed #BA7517; }
-.b-era-y    { background: #EAF3DE; color: #27500A; }
-.b-era-n    { background: #F1EFE8; color: #5F5E5A; }
-
-.sum-grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
-.sum-grid3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
-.sc { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 14px; }
-.sc-lbl { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 5px; }
-.sc-val { font-size: 22px; font-weight: 500; }
-.sc-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 3px; }
-.rate-bar-wrap { margin-top: 8px; }
-.rate-bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; }
-.rb-settled { background: #1D9E75; }
-.rb-paid    { background: #639922; }
-.rb-partial { background: #EF9F27; }
-.rb-unpaid  { background: #E8E7E1; }
-.rate-legend { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
-.rl { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--color-text-secondary); }
-.rl-dot { width: 8px; height: 8px; border-radius: 50%; }
-
-.toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-.toolbar select, .toolbar input { font-size: 13px; padding: 6px 10px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); }
-.toolbar input { width: 185px; }
-.tbtn { font-size: 12px; padding: 6px 12px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: transparent; color: var(--color-text-secondary); cursor: pointer; white-space: nowrap; }
-.tbtn-primary { border-color: #185FA5; background: #E6F1FB; color: #0C447C; font-weight: 500; }
-.tcount { font-size: 12px; color: var(--color-text-tertiary); margin-left: auto; }
-
-.body { display: flex; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; min-height: 380px; }
-.list-pane { flex: 1; min-width: 0; overflow-x: auto; }
-.side-pane { width: 0; overflow: hidden; border-left: 0.5px solid var(--color-border-tertiary); transition: width 0.2s; background: var(--color-background-primary); flex-shrink: 0; }
-.side-pane.open { width: 420px; }
-
-table { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
-thead th { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); text-align: left; padding: 9px 10px; background: var(--color-background-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
-tbody tr.inv-row { cursor: pointer; transition: background 0.1s; }
-tbody tr.inv-row:hover td { background: var(--color-background-secondary); }
-tbody tr.inv-row.active td { background: #E6F1FB; }
-tbody tr.inv-row.voided td { opacity: 0.5; }
-tbody tr.pt-row td { padding: 7px 10px 7px 26px; border-top: 0.5px solid var(--color-border-tertiary); background: var(--color-background-secondary); font-size: 12px; cursor: pointer; }
-tbody tr.pt-row:hover td { filter: brightness(0.97); }
-tbody tr.pt-row.pt-open td { background: #EAF3DE20; }
-tbody tr.cpt-row td { padding: 5px 10px 5px 44px; border-top: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); font-size: 11px; }
-tbody td { padding: 9px 10px; border-top: 0.5px solid var(--color-border-tertiary); vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.exp-icon { display: inline-block; font-size: 9px; color: var(--color-text-tertiary); transition: transform 0.15s; margin-right: 3px; }
-.exp-open { transform: rotate(90deg); }
-
-.sp-hdr { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-secondary); }
-.sp-hdr h3 { font-size: 13px; font-weight: 500; }
-.sp-x { font-size: 15px; color: var(--color-text-tertiary); cursor: pointer; background: none; border: none; padding: 2px 6px; }
-.sp-body { padding: 14px; overflow-y: auto; max-height: 640px; }
-.sp-sec { margin-bottom: 16px; }
-.sp-lbl { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
-.info-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
-.info-tbl td { padding: 4px 0; }
-.info-tbl td:first-child { color: var(--color-text-secondary); width: 115px; }
-.pt-sum-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
-.pt-sum-tbl th { font-size: 11px; color: var(--color-text-tertiary); font-weight: 400; text-align: left; padding: 0 7px 6px; }
-.pt-sum-tbl td { padding: 6px 7px; border-top: 0.5px solid var(--color-border-tertiary); }
-.pt-sum-tbl tfoot td { font-weight: 500; border-top: 1px solid var(--color-border-secondary); }
-.sp-btn { width: 100%; font-size: 12px; padding: 8px 10px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: transparent; color: var(--color-text-secondary); cursor: pointer; margin-bottom: 6px; text-align: left; }
-.sp-btn-primary { border-color: #185FA5; background: #E6F1FB; color: #0C447C; font-weight: 500; }
-.sp-btn-danger  { border-color: #F09595; background: #FCEBEB; color: #791F1F; }
-.sp-btn-amber   { border-color: #EF9F27; background: #FAEEDA; color: #633806; font-weight: 500; }
-.notice-reissue { background: #FAEEDA; border-radius: var(--border-radius-md); padding: 9px 12px; font-size: 12px; color: #633806; margin-bottom: 10px; border: 0.5px dashed #BA7517; }
-.notice-settled { background: #E1F5EE; border-radius: var(--border-radius-md); padding: 9px 12px; font-size: 12px; color: #085041; margin-bottom: 10px; }
-.pay-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 6px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
-.pay-row:last-child { border-bottom: none; }
-.pay-left { color: var(--color-text-secondary); }
-.pay-ref  { font-family: var(--font-mono); font-size: 11px; color: var(--color-text-tertiary); }
-.pay-amt  { font-weight: 500; }
-.pay-inp-row { display: flex; gap: 7px; align-items: flex-end; margin-top: 10px; flex-wrap: wrap; }
-.pay-inp-row input, .pay-inp-row select { font-size: 13px; padding: 7px 9px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); }
-.pay-inp-row input[type=number] { width: 88px; }
-.pay-inp-row input[type=text]   { width: 82px; }
-.pay-add { font-size: 12px; padding: 7px 12px; border-radius: var(--border-radius-md); border: 0.5px solid #185FA5; background: #E6F1FB; color: #0C447C; cursor: pointer; font-weight: 500; white-space: nowrap; }
-.split-pills { display: flex; gap: 6px; }
-.sp-clinic { background: #E6F1FB; color: #0C447C; font-size: 11px; padding: 2px 8px; border-radius: var(--border-radius-md); }
-.sp-hicare { background: #E1F5EE; color: #085041; font-size: 11px; padding: 2px 8px; border-radius: var(--border-radius-md); }
-
-.upload-zone { border: 1.5px dashed var(--color-border-secondary); border-radius: var(--border-radius-lg); padding: 28px; text-align: center; margin-bottom: 16px; background: var(--color-background-secondary); cursor: pointer; transition: all 0.15s; }
-.upload-zone:hover { border-color: #185FA5; background: #E6F1FB20; }
-.eob-history-wrap { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; margin-bottom: 16px; }
-.eob-hdr-row { display: flex; padding: 9px 12px; background: var(--color-background-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 11px; font-weight: 500; color: var(--color-text-secondary); }
-.eob-file-row { display: flex; align-items: center; padding: 9px 12px; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 12px; gap: 0; }
-.eob-file-row:last-child { border-bottom: none; }
-.unmatched-wrap { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; }
-.b-orig    { background: #E6F1FB; color: #0C447C; font-size: 10px; padding: 1px 7px; border-radius: 10px; }
-.b-reiss   { background: #FAEEDA; color: #633806; font-size: 10px; padding: 1px 7px; border-radius: 10px; border: 0.5px dashed #BA7517; }
-.b-proc    { background: #FAEEDA; color: #633806; }
-.b-comp    { background: #EAF3DE; color: #27500A; }
-.match-sel { font-size: 12px; padding: 5px 8px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); max-width: 160px; }
-.match-btn { font-size: 11px; padding: 4px 10px; border-radius: var(--border-radius-md); border: 0.5px solid #185FA5; background: #E6F1FB; color: #0C447C; cursor: pointer; white-space: nowrap; margin-left: 6px; }
-
-.pay-log-wrap { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; margin-bottom: 16px; }
-.rec-pay-card { border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 16px 18px; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  .icon-filled { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .anim-spin { animation: spin 0.8s linear infinite; }
+  @keyframes fadein { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  .anim-fadein { animation: fadein 0.12s ease; }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
 </style>
+</head>
+<body class="bg-page-bg text-slate-900 antialiased h-screen flex flex-col overflow-hidden">
 
-<div class="root">
-  <div class="topbar">
-    <h2>Invoice & payment management</h2>
-    <div class="month-nav">
-      <button onclick="changeMonth(-1)">‹</button>
-      <span id="month-lbl">March 2025</span>
-      <button onclick="changeMonth(1)">›</button>
+<!-- ── Top Nav ── -->
+<header class="flex items-center gap-3 px-5 h-[52px] bg-white border-b border-slate-100 flex-shrink-0 z-40">
+  <div class="h-7 w-7 rounded-lg bg-primary flex items-center justify-center text-white text-sm">⚕</div>
+  <span class="text-sm font-semibold">Billing Assistant</span>
+  <div class="w-px h-4 bg-slate-200 mx-1"></div>
+  <span class="text-sm text-slate-500">Billing &amp; Settlement</span>
+  <div class="ml-auto flex items-center gap-3">
+    <div class="h-7 w-7 rounded-full bg-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-500">AK</div>
+  </div>
+</header>
+
+<!-- ── Body ── -->
+<div class="flex flex-1 overflow-hidden" style="height: calc(100vh - 52px)">
+
+  <!-- Left: Clinic List -->
+  <aside class="w-[200px] flex-shrink-0 bg-white border-r border-slate-100 flex flex-col overflow-y-auto">
+    <div class="px-4 pt-4 pb-2">
+      <p class="text-[10px] font-semibold uppercase tracking-widest text-slate-400 mb-2">Clinics</p>
     </div>
-  </div>
+    <div id="clinic-list" class="px-2 space-y-1 pb-4"></div>
+  </aside>
 
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('invoices')">Invoices</button>
-    <button class="tab" onclick="switchTab('payments')">Payments</button>
-    <button class="tab" onclick="switchTab('eob')">EOB upload & matching</button>
-  </div>
+  <!-- Right: Main Content -->
+  <div class="flex-1 flex flex-col overflow-hidden bg-page-bg">
 
-  <div class="tab-panel active" id="tab-invoices">
-    <div class="sum-grid4">
-      <div class="sc"><div class="sc-lbl">Total invoiced</div><div class="sc-val" id="s-total">$0</div><div class="sc-sub" id="s-inv-sub"></div></div>
-      <div class="sc"><div class="sc-lbl">Collected</div><div class="sc-val" id="s-coll">$0</div><div class="sc-sub" id="s-coll-sub"></div></div>
-      <div class="sc"><div class="sc-lbl">Outstanding</div><div class="sc-val" style="color:#791F1F" id="s-out">$0</div><div class="sc-sub" id="s-out-sub"></div></div>
-      <div class="sc">
-        <div class="sc-lbl">수금 현황</div>
-        <div class="rate-bar-wrap">
-          <div class="rate-bar" id="rate-bar"></div>
-          <div class="rate-legend">
-            <div class="rl"><div class="rl-dot" style="background:#1D9E75"></div>Settled</div>
-            <div class="rl"><div class="rl-dot" style="background:#639922"></div>Paid</div>
-            <div class="rl"><div class="rl-dot" style="background:#EF9F27"></div>Partial</div>
-            <div class="rl"><div class="rl-dot" style="background:#E8E7E1"></div>Unpaid</div>
+    <!-- Clinic Header -->
+    <div class="px-6 pt-5 pb-0 flex-shrink-0">
+      <div class="flex items-center gap-2.5">
+        <h2 id="clinic-name" class="text-[17px] font-medium text-slate-800">Sunrise Family Clinic</h2>
+        <div id="service-badges" class="flex gap-1.5"></div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="px-6 mt-3 flex-shrink-0 border-b border-slate-200">
+      <div class="flex gap-0">
+        <button id="tab-invoice" onclick="switchTab('invoice')"
+          class="text-[13px] px-4 py-2.5 border-b-2 border-primary font-medium text-slate-900 bg-transparent cursor-pointer transition-all">
+          Invoice entry
+        </button>
+        <button id="tab-history" onclick="switchTab('history')"
+          class="text-[13px] px-4 py-2.5 border-b-2 border-transparent text-slate-500 hover:text-slate-700 bg-transparent cursor-pointer transition-all">
+          Entry history
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="flex-1 overflow-y-auto">
+      <!-- Invoice Entry Tab -->
+      <div id="panel-invoice" class="flex flex-col gap-3.5 px-6 py-5">
+
+        <!-- Month Navigator -->
+        <div class="flex items-center gap-2.5">
+          <button onclick="changeMonth(-1)"
+            class="w-7 h-7 border border-slate-200 rounded-md text-slate-500 hover:bg-slate-50 flex items-center justify-center cursor-pointer bg-white text-base leading-none">‹</button>
+          <span id="month-label" class="text-[14px] font-semibold text-slate-700 min-w-[130px] text-center"></span>
+          <button onclick="changeMonth(1)"
+            class="w-7 h-7 border border-slate-200 rounded-md text-slate-500 hover:bg-slate-50 flex items-center justify-center cursor-pointer bg-white text-base leading-none">›</button>
+          <button id="today-btn" onclick="goToday()"
+            class="text-[11px] text-slate-400 hover:text-slate-600 cursor-pointer bg-transparent border-none px-1"
+            title="Go to current month">Today</button>
+          <span id="paid-badge" class="text-[11px] px-2.5 py-1 rounded-full"></span>
+          <span id="autosave-status" class="ml-auto hidden items-center gap-1 text-[11px]"></span>
+        </div>
+
+        <!-- Invoice Card -->
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div class="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
+            <span class="material-symbols-outlined text-[18px] text-slate-400">receipt_long</span>
+            <span class="text-sm font-semibold text-slate-700">Invoice</span>
+          </div>
+          <div class="px-4 py-3">
+
+            <!-- RPM ServiceBlock -->
+            <div id="rpm-block" class="border border-slate-100 rounded-md overflow-hidden mb-3">
+              <div class="flex items-center justify-between px-3.5 py-2.5 bg-slate-50 border-b border-slate-100" style="border-left: 3px solid #185FA5">
+                <div class="flex items-center gap-2">
+                  <span class="text-[12px] font-medium text-[#0C447C]">RPM</span>
+                  <span class="text-slate-300 text-[11px]">·</span>
+                  <input type="number" id="rpm-pts" placeholder="0" oninput="onFieldChange()"
+                    class="w-14 text-center px-1.5 py-0.5 text-[11px] border border-slate-200 rounded bg-white focus:outline-none focus:border-[#185FA5]"/>
+                  <span class="text-[10px] text-slate-400">pts</span>
+                </div>
+                <span id="rpm-split-label" class="text-[11px] text-slate-400"></span>
+              </div>
+              <div class="px-3.5 py-3 grid grid-cols-2 gap-4 items-start">
+                <div class="flex flex-col gap-1">
+                  <label class="text-[11px] text-slate-500">RPM invoice total</label>
+                  <div class="relative">
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[13px] pointer-events-none">$</span>
+                    <input type="number" id="rpm-invoice" placeholder="0" oninput="onFieldChange()"
+                      class="w-full pl-5 pr-2.5 py-1.5 text-[13px] border border-slate-200 rounded-md bg-white focus:outline-none focus:border-[#185FA5]"/>
+                  </div>
+                </div>
+                <div id="rpm-calc" class="bg-slate-50 rounded-md px-3 py-2.5 flex flex-col gap-0.5 hidden"></div>
+              </div>
+            </div>
+
+            <!-- CCM ServiceBlock -->
+            <div id="ccm-block" class="border border-slate-100 rounded-md overflow-hidden mb-3">
+              <div class="flex items-center justify-between px-3.5 py-2.5 bg-slate-50 border-b border-slate-100" style="border-left: 3px solid #1D9E75">
+                <div class="flex items-center gap-2">
+                  <span class="text-[12px] font-medium text-[#085041]">CCM</span>
+                  <span class="text-slate-300 text-[11px]">·</span>
+                  <input type="number" id="ccm-pts" placeholder="0" oninput="onFieldChange()"
+                    class="w-14 text-center px-1.5 py-0.5 text-[11px] border border-slate-200 rounded bg-white focus:outline-none focus:border-[#185FA5]"/>
+                  <span class="text-[10px] text-slate-400">pts</span>
+                </div>
+                <span id="ccm-split-label" class="text-[11px] text-slate-400"></span>
+              </div>
+              <div class="px-3.5 py-3 grid grid-cols-2 gap-4 items-start">
+                <div class="flex flex-col gap-1">
+                  <label class="text-[11px] text-slate-500">CCM invoice total</label>
+                  <div class="relative">
+                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[13px] pointer-events-none">$</span>
+                    <input type="number" id="ccm-invoice" placeholder="0" oninput="onFieldChange()"
+                      class="w-full pl-5 pr-2.5 py-1.5 text-[13px] border border-slate-200 rounded-md bg-white focus:outline-none focus:border-[#185FA5]"/>
+                  </div>
+                </div>
+                <div id="ccm-calc" class="bg-slate-50 rounded-md px-3 py-2.5 flex flex-col gap-0.5 hidden"></div>
+              </div>
+            </div>
+
+            <!-- Total Card -->
+            <div id="invoice-total-card" class="hidden bg-slate-50 border border-slate-200 rounded-md px-3.5 py-3 flex flex-col gap-0.5 mt-1">
+            </div>
+
+            <!-- Info row -->
+            <div id="invoice-info" class="flex items-center gap-2 mt-3 px-3 py-2.5 bg-[#E6F1FB] rounded-md text-[11px] text-[#0C447C] leading-relaxed">
+              <span class="material-symbols-outlined text-[14px] flex-shrink-0">info</span>
+              <span id="invoice-info-text"></span>
+            </div>
+
           </div>
         </div>
-      </div>
-    </div>
 
-    <div class="toolbar">
-      <select id="f-status" onchange="renderInvoices()">
-        <option value="">Status: All</option>
-        <option value="Unpaid">Unpaid</option>
-        <option value="Partial">Partial</option>
-        <option value="Paid">Paid</option>
-        <option value="Settled">Settled</option>
-        <option value="Reissue">Reissue pending</option>
-        <option value="Void">Void</option>
-      </select>
-      <input type="text" id="f-search" placeholder="Search clinic or invoice ID..." oninput="renderInvoices()"/>
-      <button class="tbtn tbtn-primary">+ Generate invoices</button>
-      <span class="tcount" id="inv-count"></span>
-    </div>
+        <!-- HicareNet Collection Card -->
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div class="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
+            <span class="material-symbols-outlined text-[18px] text-slate-400">account_balance</span>
+            <span class="text-sm font-semibold text-slate-700">HicareNet Collection</span>
+          </div>
+          <div class="px-4 py-3">
 
-    <div class="body">
-      <div class="list-pane">
-        <table>
-          <thead><tr>
-            <th style="width:96px">Invoice ID</th>
-            <th style="width:160px">Clinic</th>
-            <th style="width:58px">Patients</th>
-            <th style="width:56px">Claims</th>
-            <th style="width:90px">Total billed</th>
-            <th style="width:90px">Invoice amt.</th>
-            <th style="width:76px">Paid</th>
-            <th style="width:72px">Balance</th>
-            <th style="width:96px">Status</th>
-            <th style="width:82px">Due date</th>
-          </tr></thead>
-          <tbody id="inv-tbody"></tbody>
-        </table>
-      </div>
-      <div class="side-pane" id="inv-side">
-        <div class="sp-hdr">
-          <h3 id="sp-title">Invoice detail</h3>
-          <button class="sp-x" onclick="closePanel()">✕</button>
+            <!-- Collapsible trigger -->
+            <button onclick="toggleCI()"
+              class="w-full flex items-center justify-between cursor-pointer bg-transparent border border-slate-200 rounded-md px-3.5 py-3 text-left hover:bg-slate-50 transition">
+              <div class="flex items-center gap-3">
+                <span class="text-[13px] font-medium text-slate-500">Enter deposit received by HicareNet</span>
+                <span id="ci-saved-badge" class="hidden text-[11px] text-[#27500A] bg-[#EAF3DE] px-2 py-0.5 rounded-full"></span>
+              </div>
+              <span id="ci-chevron" class="material-symbols-outlined text-[18px] text-slate-400 transition-transform">expand_more</span>
+            </button>
+
+            <!-- CI Form (hidden by default) -->
+            <div id="ci-form" class="hidden pt-4 border-t border-slate-100 mt-3">
+
+              <!-- Mode toggle -->
+              <div class="mb-4">
+                <p class="text-[11px] text-slate-400 mb-2">Input method</p>
+                <div class="flex border border-slate-200 rounded-md overflow-hidden w-fit">
+                  <button id="mode-total-btn" onclick="setCIMode('total')"
+                    class="text-[12px] px-3.5 py-1.5 cursor-pointer border-none bg-[#E6F1FB] text-[#0C447C] font-medium">
+                    Total amount
+                  </button>
+                  <button id="mode-split-btn" onclick="setCIMode('split')"
+                    class="text-[12px] px-3.5 py-1.5 cursor-pointer border-none border-l border-slate-200 bg-slate-50 text-slate-500">
+                    RPM / CCM separately
+                  </button>
+                </div>
+              </div>
+
+              <!-- Total Mode -->
+              <div id="ci-total-mode" class="flex flex-col gap-3">
+                <div class="grid grid-cols-3 gap-3">
+                  <div class="flex flex-col gap-1">
+                    <label class="text-[11px] text-slate-500">Deposit amount</label>
+                    <div class="relative">
+                      <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[13px] pointer-events-none">$</span>
+                      <input type="number" id="ci-total-amt" placeholder="0" oninput="updateCICalc()"
+                        class="w-full pl-5 pr-2.5 py-1.5 text-[13px] border border-slate-200 rounded-md bg-white focus:outline-none focus:border-[#185FA5]"/>
+                    </div>
+                    <p id="ci-expected-hint" class="text-[10px] text-slate-400"></p>
+                  </div>
+                  <div class="flex flex-col gap-1">
+                    <label class="text-[11px] text-slate-500">Deposit date</label>
+                    <input type="date" id="ci-date"
+                      class="w-full px-2.5 py-1.5 text-[13px] border border-slate-200 rounded-md bg-white focus:outline-none focus:border-[#185FA5]"/>
+                  </div>
+                  <div class="flex flex-col gap-1">
+                    <label class="text-[11px] text-slate-500">Payment method</label>
+                    <select id="ci-method"
+                      class="w-full px-2.5 py-1.5 text-[13px] border border-slate-200 rounded-md bg-white focus:outline-none focus:border-[#185FA5]">
+                      <option value="">Select</option>
+                      <option>ACH</option>
+                      <option>Zelle</option>
+                      <option>Check</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="flex flex-col gap-1">
+                    <label class="text-[11px] text-slate-500">Reference no.</label>
+                    <input type="text" id="ci-ref" placeholder="Check # / ACH ref"
+                      class="w-full px-2.5 py-1.5 text-[13px] border border-slate-200 rounded-md bg-white focus:outline-none focus:border-[#185FA5]"/>
+                  </div>
+                  <div class="flex flex-col gap-1">
+                    <label class="text-[11px] text-slate-500">Remark</label>
+                    <input type="text" id="ci-remark" placeholder="Optional note"
+                      class="w-full px-2.5 py-1.5 text-[13px] border border-slate-200 rounded-md bg-white focus:outline-none focus:border-[#185FA5]"/>
+                  </div>
+                </div>
+                <div id="ci-total-summary" class="hidden bg-slate-50 border border-slate-200 rounded-md px-3.5 py-3 flex flex-col gap-0.5"></div>
+              </div>
+
+              <!-- Split Mode -->
+              <div id="ci-split-mode" class="hidden flex flex-col gap-3">
+                <div id="ci-rpm-split-block" class="border border-slate-100 rounded-md overflow-hidden">
+                  <div class="flex items-center px-3.5 py-2 bg-slate-50 border-b border-slate-100" style="border-left: 3px solid #185FA5">
+                    <span class="text-[12px] font-medium text-[#0C447C]">RPM — HicareNet deposit</span>
+                  </div>
+                  <div class="px-3.5 py-3 flex flex-col gap-2">
+                    <div class="flex flex-col gap-1">
+                      <label class="text-[11px] text-slate-500">RPM deposit amount</label>
+                      <div class="relative">
+                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[13px] pointer-events-none">$</span>
+                        <input type="number" id="ci-rpm-amt" placeholder="0" oninput="updateCISplitCalc()"
+                          class="w-full pl-5 pr-2.5 py-1.5 text-[13px] border border-slate-200 rounded-md bg-white focus:outline-none focus:border-[#185FA5]"/>
+                      </div>
+                      <p id="ci-rpm-hint" class="text-[10px] text-slate-400"></p>
+                    </div>
+                    <div id="ci-rpm-calc" class="hidden bg-slate-50 rounded-md px-3 py-2.5 flex flex-col gap-0.5"></div>
+                  </div>
+                </div>
+                <div id="ci-ccm-split-block" class="border border-slate-100 rounded-md overflow-hidden">
+                  <div class="flex items-center px-3.5 py-2 bg-slate-50 border-b border-slate-100" style="border-left: 3px solid #1D9E75">
+                    <span class="text-[12px] font-medium text-[#085041]">CCM — HicareNet deposit</span>
+                  </div>
+                  <div class="px-3.5 py-3 flex flex-col gap-2">
+                    <div class="flex flex-col gap-1">
+                      <label class="text-[11px] text-slate-500">CCM deposit amount</label>
+                      <div class="relative">
+                        <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[13px] pointer-events-none">$</span>
+                        <input type="number" id="ci-ccm-amt" placeholder="0" oninput="updateCISplitCalc()"
+                          class="w-full pl-5 pr-2.5 py-1.5 text-[13px] border border-slate-200 rounded-md bg-white focus:outline-none focus:border-[#185FA5]"/>
+                      </div>
+                      <p id="ci-ccm-hint" class="text-[10px] text-slate-400"></p>
+                    </div>
+                    <div id="ci-ccm-calc" class="hidden bg-slate-50 rounded-md px-3 py-2.5 flex flex-col gap-0.5"></div>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <label class="text-[11px] text-slate-500">Remark</label>
+                  <input type="text" id="ci-split-remark" placeholder="Optional note"
+                    class="w-full px-2.5 py-1.5 text-[13px] border border-slate-200 rounded-md bg-white focus:outline-none focus:border-[#185FA5]"/>
+                </div>
+                <div id="ci-split-summary" class="hidden bg-slate-50 border border-slate-200 rounded-md px-3.5 py-3 flex flex-col gap-0.5"></div>
+              </div>
+
+              <!-- Save CI Button -->
+              <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 mt-4">
+                <span id="ci-saved-confirm" class="hidden items-center gap-1 text-[12px] text-[#27500A]">
+                  <span class="material-symbols-outlined text-[14px] icon-filled">check_circle</span>Saved
+                </span>
+                <button onclick="saveCI()"
+                  class="text-[12px] font-medium px-4 py-1.5 border border-slate-200 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-700 transition cursor-pointer">
+                  Save CI
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="sp-body" id="sp-body"></div>
-      </div>
-    </div>
-  </div>
 
-  <div class="tab-panel" id="tab-payments">
-    <div class="sum-grid3">
-      <div class="sc"><div class="sc-lbl">Total received (this month)</div><div class="sc-val" id="p-total">$0</div><div class="sc-sub" id="p-sub"></div></div>
-      <div class="sc"><div class="sc-lbl">Pending collection</div><div class="sc-val" style="color:#791F1F" id="p-pend">$0</div><div class="sc-sub" id="p-pend-sub"></div></div>
-      <div class="sc"><div class="sc-lbl">Fully settled</div><div class="sc-val" style="color:#27500A" id="p-settled">0</div><div class="sc-sub">invoices this month</div></div>
-    </div>
-    <div class="toolbar">
-      <select><option>Clinic: All</option><option>Sunrise Health Center</option><option>Westside Clinic</option><option>Lakeview Medical</option><option>Pacific Care Group</option></select>
-      <input type="text" placeholder="Search clinic or ref no..." style="width:185px;font-size:13px;padding:6px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);"/>
-      <span class="tcount" style="margin-left:auto" id="pay-count"></span>
-    </div>
-    <div class="pay-log-wrap">
-      <table>
-        <thead><tr>
-          <th style="width:90px">Date</th>
-          <th style="width:96px">Invoice ID</th>
-          <th style="width:155px">Clinic</th>
-          <th style="width:80px">Method</th>
-          <th style="width:120px">Ref no.</th>
-          <th style="width:88px">Amount</th>
-          <th style="width:96px">Status</th>
-          <th style="width:80px">Action</th>
-        </tr></thead>
-        <tbody id="pay-tbody"></tbody>
-      </table>
-    </div>
-    <div class="rec-pay-card">
-      <div style="font-size:12px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px">Record new payment</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:10px;align-items:flex-end;">
-        <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11px;color:var(--color-text-secondary)">Invoice ID</label><input type="text" style="font-size:13px;padding:7px 9px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);" placeholder="INV-XXXX"/></div>
-        <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11px;color:var(--color-text-secondary)">Amount</label><input type="number" style="font-size:13px;padding:7px 9px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);" placeholder="0.00"/></div>
-        <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11px;color:var(--color-text-secondary)">Method</label><select style="font-size:13px;padding:7px 9px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);"><option>ACH</option><option>Check</option><option>Wire</option></select></div>
-        <div style="display:flex;flex-direction:column;gap:5px"><label style="font-size:11px;color:var(--color-text-secondary)">Ref no.</label><input type="text" style="font-size:13px;padding:7px 9px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);" placeholder="ACH-XXXX"/></div>
-        <button onclick="alert('Payment recorded')" style="font-size:13px;padding:7px 18px;border-radius:var(--border-radius-md);border:0.5px solid #185FA5;background:#E6F1FB;color:#0C447C;cursor:pointer;font-weight:500;white-space:nowrap;">+ Record</button>
-      </div>
-    </div>
-  </div>
+        <div class="pb-6"></div>
+      </div><!-- /panel-invoice -->
 
-  <div class="tab-panel" id="tab-eob">
-    <div class="upload-zone" onclick="alert('EOB PDF upload — Medicare ID 기준 자동 매칭 시작')">
-      <div style="font-size:22px;margin-bottom:8px;color:var(--color-text-tertiary)">↑</div>
-      <div style="font-size:14px;font-weight:500;margin-bottom:4px;">Drop EOB PDF here or click to upload</div>
-      <div style="font-size:12px;color:var(--color-text-tertiary);">Medicare ID 기준 자동 매칭 · 재발행 감지 시 기존 Invoice 자동 Void 처리</div>
-    </div>
-    <div class="sum-grid3">
-      <div class="sc"><div class="sc-lbl">Uploaded this month</div><div class="sc-val">3</div><div class="sc-sub">EOB files</div></div>
-      <div class="sc"><div class="sc-lbl">Auto-matched</div><div class="sc-val" style="color:#27500A">18</div><div class="sc-sub">claims matched</div></div>
-      <div class="sc"><div class="sc-lbl">Unmatched</div><div class="sc-val" style="color:#791F1F" id="unmatched-cnt">2</div><div class="sc-sub">manual review needed</div></div>
-    </div>
-    <div class="eob-history-wrap">
-      <div class="eob-hdr-row">
-        <span style="flex:1">File name</span>
-        <span style="width:90px">Uploaded</span>
-        <span style="width:80px">Matched</span>
-        <span style="width:90px">Type</span>
-        <span style="width:80px">Status</span>
-      </div>
-      <div class="eob-file-row">
-        <span style="flex:1;font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary)">EOB_Medicare_Mar2025_batch1.pdf</span>
-        <span style="width:90px;color:var(--color-text-tertiary)">2025-03-20</span>
-        <span style="width:80px">16 / 18</span>
-        <span style="width:90px"><span class="b-orig">Original</span></span>
-        <span style="width:80px"><span class="badge b-proc">Processing</span></span>
-      </div>
-      <div class="eob-file-row">
-        <span style="flex:1;font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary)">EOB_Medicare_Jan2025_reissued.pdf</span>
-        <span style="width:90px;color:var(--color-text-tertiary)">2025-03-18</span>
-        <span style="width:80px">3 / 3</span>
-        <span style="width:90px"><span class="b-reiss">Reissued</span></span>
-        <span style="width:80px"><span class="badge b-comp">Complete</span></span>
-      </div>
-      <div class="eob-file-row">
-        <span style="flex:1;font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary)">EOB_Commercial_Mar2025.pdf</span>
-        <span style="width:90px;color:var(--color-text-tertiary)">2025-03-19</span>
-        <span style="width:80px">5 / 5</span>
-        <span style="width:90px"><span class="b-orig">Original</span></span>
-        <span style="width:80px"><span class="badge b-comp">Complete</span></span>
-      </div>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-size:13px;font-weight:500">Unmatched — manual review</div>
-      <span style="font-size:12px;color:var(--color-text-tertiary)" id="unmatched-lbl">2 items</span>
-    </div>
-    <div class="unmatched-wrap">
-      <table>
-        <thead><tr>
-          <th style="width:130px">Medicare ID (EOB)</th>
-          <th style="width:110px">Patient (EOB)</th>
-          <th style="width:60px">CPT</th>
-          <th style="width:70px">Amount</th>
-          <th>Match to claim</th>
-          <th style="width:64px"></th>
-        </tr></thead>
-        <tbody id="unmatched-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
+      <!-- Entry History Tab -->
+      <div id="panel-history" class="px-6 py-5 hidden">
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div class="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
+            <span class="material-symbols-outlined text-[18px] text-slate-400">history</span>
+            <span id="history-title" class="text-sm font-semibold text-slate-700">Entry History</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm border-collapse">
+              <thead>
+                <tr class="border-b border-slate-100 bg-slate-50">
+                  <th class="text-left text-[11px] font-semibold text-slate-400 px-4 py-2.5 whitespace-nowrap">Period</th>
+                  <th class="text-left text-[11px] font-semibold text-slate-400 px-4 py-2.5 whitespace-nowrap">RPM invoice</th>
+                  <th class="text-left text-[11px] font-semibold text-slate-400 px-4 py-2.5 whitespace-nowrap">CCM invoice</th>
+                  <th class="text-left text-[11px] font-semibold text-slate-400 px-4 py-2.5 whitespace-nowrap">Total invoice</th>
+                  <th class="text-left text-[11px] font-semibold text-slate-400 px-4 py-2.5 whitespace-nowrap">HicareNet CI</th>
+                  <th class="text-left text-[11px] font-semibold text-slate-400 px-4 py-2.5 whitespace-nowrap">Uncollected</th>
+                  <th class="text-left text-[11px] font-semibold text-slate-400 px-4 py-2.5 whitespace-nowrap">Status</th>
+                  <th class="text-right text-[11px] font-semibold text-slate-400 px-4 py-2.5 whitespace-nowrap">Action</th>
+                </tr>
+              </thead>
+              <tbody id="history-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /panel-history -->
+
+    </div><!-- /tab content -->
+  </div><!-- /right -->
+</div><!-- /body -->
+
 
 <script>
-const MONTHS=["January 2025","February 2025","March 2025","April 2025"];
-let monthIdx=2;
-let selId=null, expInv=new Set(), expPt=new Set();
+// ══ Dummy Data ══════════════════════════════════════════════════════════════
+const CLINICS = [
+  {
+    id: 1, name: 'Sunrise Family Clinic', code: 'SUN',
+    services: ['RPM','CCM'],
+    rpmSplit: [70, 30], ccmSplit: [65, 35],
+    billerFeeType: 'pct', billerFeeVal: 4,
+    records: [
+      { id:'r1', billingYear:2026, billingMonth:3,  rpmInvoice:12400, ccmInvoice:8200,  rpmPts:52, ccmPts:34, ciAmount:5824,  ciDate:'2026-04-02', ciMethod:'ACH',  ciReference:'ACH20260402', ciRemark:'March settled', status:'paid' },
+      { id:'r2', billingYear:2026, billingMonth:2,  rpmInvoice:11800, ccmInvoice:7600,  rpmPts:49, ccmPts:31, ciAmount:5308,  ciDate:'2026-03-05', ciMethod:'Zelle',ciReference:null,           ciRemark:null,            status:'paid' },
+      { id:'r3', billingYear:2026, billingMonth:1,  rpmInvoice:13100, ccmInvoice:9000,  rpmPts:55, ccmPts:37, ciAmount:6426,  ciDate:'2026-02-03', ciMethod:'ACH',  ciReference:'ACH20260203', ciRemark:null,            status:'paid' },
+      { id:'r4', billingYear:2025, billingMonth:12, rpmInvoice:10500, ccmInvoice:6800,  rpmPts:44, ccmPts:28, ciAmount:null,  ciDate:null,         ciMethod:null,   ciReference:null,           ciRemark:null,            status:'unpaid' },
+    ],
+  },
+  {
+    id: 2, name: 'Pacific Medical Center', code: 'PAC',
+    services: ['CCM'],
+    rpmSplit: [50, 50], ccmSplit: [60, 40],
+    billerFeeType: 'fixed', billerFeeVal: 200,
+    records: [
+      { id:'r5', billingYear:2026, billingMonth:3,  rpmInvoice:0,     ccmInvoice:5400,  rpmPts:0,  ccmPts:22, ciAmount:1960,  ciDate:'2026-04-05', ciMethod:'Check',ciReference:'CHK-8821',    ciRemark:null,            status:'paid' },
+      { id:'r6', billingYear:2026, billingMonth:2,  rpmInvoice:0,     ccmInvoice:4900,  rpmPts:0,  ccmPts:20, ciAmount:null,  ciDate:null,         ciMethod:null,   ciReference:null,           ciRemark:null,            status:'unpaid' },
+    ],
+  },
+  {
+    id: 3, name: 'Harbor Health Associates', code: 'HAR',
+    services: ['RPM'],
+    rpmSplit: [75, 25], ccmSplit: [50, 50],
+    billerFeeType: 'pct', billerFeeVal: 3.5,
+    records: [
+      { id:'r7', billingYear:2026, billingMonth:3,  rpmInvoice:9200,  ccmInvoice:0,     rpmPts:38, ccmPts:0,  ciAmount:2231,  ciDate:'2026-04-08', ciMethod:'ACH',  ciReference:'ACH20260408', ciRemark:null,            status:'paid' },
+    ],
+  },
+]
 
-const invoices=[
-  {id:"INV-2503-01",clinic:"Sunrise Health Center",month:"2025-03",split:{c:50,h:50},status:"Unpaid",dueDate:"2025-04-15",payments:[],
-   patients:[
-     {name:"Margaret Collins",insId:"1EG4-TE5-MK72",claimId:"CLM-0310",cpts:[{code:"99453",billed:19,paid:0},{code:"99454",billed:55,paid:0},{code:"99457",billed:48,paid:0},{code:"99458",billed:39,paid:0},{code:"99490",billed:67,paid:0},{code:"99439",billed:47,paid:0}]},
-     {name:"Robert Nguyen",insId:"2WX9-AB3-LP41",claimId:"CLM-0311",cpts:[{code:"99457",billed:48,paid:30},{code:"99458",billed:39,paid:0}]},
-   ]},
-  {id:"INV-2503-02",clinic:"Westside Clinic",month:"2025-03",split:{c:60,h:40},status:"Reissue",dueDate:"2025-04-15",payments:[],reissueNote:"EOB 재발행 — 금액 변경 ($258 → $234)",
-   patients:[
-     {name:"Dorothy Simmons",insId:"3RT2-CV7-NQ88",claimId:"CLM-0312",cpts:[{code:"99490",billed:70,paid:0},{code:"99439",billed:47,paid:0}]},
-     {name:"James Watkins",insId:"4MN5-GH1-SR63",claimId:"CLM-0313",cpts:[{code:"99453",billed:19,paid:19},{code:"99454",billed:55,paid:55},{code:"99490",billed:67,paid:67}]},
-   ]},
-  {id:"INV-2503-03",clinic:"Lakeview Medical",month:"2025-03",split:{c:50,h:50},status:"Settled",dueDate:"2025-04-15",payments:[{date:"2025-04-02",amount:115,method:"ACH",ref:"ACH-5501"}],
-   patients:[
-     {name:"Patricia Lawson",insId:"5YK8-JL4-DP27",claimId:"CLM-0314",cpts:[{code:"99454",billed:55,paid:0},{code:"99457",billed:48,paid:0}]},
-     {name:"Harold Freeman",insId:"6QZ3-PW9-UM54",claimId:"CLM-0315",cpts:[{code:"99490",billed:67,paid:67},{code:"99439",billed:47,paid:47}]},
-   ]},
-  {id:"INV-2503-04",clinic:"Pacific Care Group",month:"2025-03",split:{c:55,h:45},status:"Paid",dueDate:"2025-04-15",payments:[{date:"2025-04-01",amount:73,method:"Check",ref:"CHK-9901"}],
-   patients:[
-     {name:"Barbara Chen",insId:"7BF6-KT2-HV39",claimId:"CLM-0316",cpts:[{code:"99490",billed:67,paid:67},{code:"99439",billed:47,paid:47},{code:"99453",billed:19,paid:19}]},
-   ]},
-];
+// ══ State ═══════════════════════════════════════════════════════════════════
+let activeId    = 1
+let activeTab   = 'invoice'
+let monthOffset = 0
+let ciOpen      = false
+let ciMode      = 'total'
+let autoSaveTimer = null
 
-invoices.forEach(inv=>{
-  inv.totalBilled=inv.patients.reduce((a,p)=>a+p.cpts.reduce((b,c)=>b+c.billed,0),0);
-  inv.totalInsPaid=inv.patients.reduce((a,p)=>a+p.cpts.reduce((b,c)=>b+c.paid,0),0);
-  inv.invoiceAmt=Math.round(inv.totalBilled*(inv.split.h/100)*100)/100;
-  inv.paid=inv.payments.reduce((a,p)=>a+p.amount,0);
-});
+const MONTHS_LONG  = ['January','February','March','April','May','June','July','August','September','October','November','December']
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
-const paymentLog=[
-  {date:"2025-04-01",invId:"INV-2503-04",clinic:"Pacific Care Group",method:"Check",ref:"CHK-9901",amount:73,settled:true},
-  {date:"2025-04-02",invId:"INV-2503-03",clinic:"Lakeview Medical",method:"ACH",ref:"ACH-5501",amount:115,settled:true},
-];
+// ══ Init ════════════════════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  renderClinicList()
+  selectClinic(1)
+})
 
-const unmatchedData=[
-  {id:1,medicareId:"9ZZ1-XX4-AB12",patient:"Unknown",cpt:"99490",amount:67,matched:false},
-  {id:2,medicareId:"5YK8-JL4-DP27",patient:"P. Lawson",cpt:"99457",amount:48,matched:false},
-];
-const claimOpts=["CLM-0310 · Margaret Collins","CLM-0311 · Robert Nguyen","CLM-0312 · Dorothy Simmons","CLM-0313 · James Watkins","CLM-0314 · Patricia Lawson","CLM-0315 · Harold Freeman","CLM-0316 · Barbara Chen"];
-
-function invBadge(s){const m={"Unpaid":"b-unpaid","Partial":"b-partial","Paid":"b-paid","Settled":"b-settled","Reissue":"b-reissue","Void":"b-void"};return `<span class="badge ${m[s]||'b-unpaid'}">${s}</span>`;}
-
-function switchTab(t){
-  ['invoices','payments','eob'].forEach(id=>document.getElementById('tab-'+id).classList.toggle('active',id===t));
-  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',['invoices','payments','eob'][i]===t));
+// ══ Helpers ═════════════════════════════════════════════════════════════════
+function fmt(n) {
+  return '$' + (n ?? 0).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 })
 }
 
-function changeMonth(d){monthIdx=Math.max(0,Math.min(MONTHS.length-1,monthIdx+d));document.getElementById('month-lbl').textContent=MONTHS[monthIdx];renderAll();}
+function currentClinic() { return CLINICS.find(c => c.id === activeId) }
 
-function renderSummary(){
-  const active=invoices.filter(i=>i.status!=='Void');
-  const total=active.reduce((a,i)=>a+i.invoiceAmt,0);
-  const coll=active.reduce((a,i)=>a+i.paid,0);
-  const out=total-coll;
-  document.getElementById('s-total').textContent='$'+Math.round(total).toLocaleString();
-  document.getElementById('s-inv-sub').textContent=active.length+' invoices · '+active.reduce((a,i)=>a+i.patients.length,0)+' patients';
-  document.getElementById('s-coll').textContent='$'+Math.round(coll).toLocaleString();
-  document.getElementById('s-coll-sub').textContent=active.filter(i=>i.status==='Paid'||i.status==='Settled').length+' settled / paid';
-  document.getElementById('s-out').textContent='$'+Math.round(out).toLocaleString();
-  document.getElementById('s-out-sub').textContent=active.filter(i=>i.status==='Unpaid'||i.status==='Reissue').length+' unpaid invoices';
-  const settled=active.filter(i=>i.status==='Settled').reduce((a,i)=>a+i.invoiceAmt,0);
-  const paid=active.filter(i=>i.status==='Paid').reduce((a,i)=>a+i.invoiceAmt,0);
-  const partial=active.filter(i=>i.status==='Partial').reduce((a,i)=>a+i.paid,0);
-  const unpaid=out-partial;
-  const t=Math.max(total,1);
-  document.getElementById('rate-bar').innerHTML=
-    `<div class="rb-settled" style="width:${Math.round(settled/t*100)}%"></div>`+
-    `<div class="rb-paid"    style="width:${Math.round(paid/t*100)}%"></div>`+
-    `<div class="rb-partial" style="width:${Math.round(partial/t*100)}%"></div>`+
-    `<div class="rb-unpaid"  style="flex:1"></div>`;
-  const pt=paymentLog.reduce((a,p)=>a+p.amount,0);
-  document.getElementById('p-total').textContent='$'+pt.toLocaleString();
-  document.getElementById('p-sub').textContent=paymentLog.length+' payments';
-  document.getElementById('p-pend').textContent='$'+Math.round(out).toLocaleString();
-  document.getElementById('p-pend-sub').textContent=active.filter(i=>i.status==='Unpaid'||i.status==='Partial'||i.status==='Reissue').length+' invoices';
-  document.getElementById('p-settled').textContent=active.filter(i=>i.status==='Settled').length;
-  document.getElementById('pay-count').textContent=paymentLog.length+' payments';
+function offsetMonth(offset) {
+  const now = new Date()
+  const d = new Date(now.getFullYear(), now.getMonth() + offset)
+  return { year: d.getFullYear(), month: d.getMonth() + 1 }
 }
 
-function renderInvoices(){
-  const sf=document.getElementById('f-status').value;
-  const sr=(document.getElementById('f-search').value||'').toLowerCase();
-  const filtered=invoices.filter(i=>{if(sf&&i.status!==sf)return false;if(sr&&!i.clinic.toLowerCase().includes(sr)&&!i.id.toLowerCase().includes(sr))return false;return true;});
-  document.getElementById('inv-count').textContent=filtered.length+' invoices';
-  const tbody=document.getElementById('inv-tbody');
-  tbody.innerHTML='';
-  filtered.forEach(inv=>{
-    const bal=inv.invoiceAmt-inv.paid;
-    const isExp=expInv.has(inv.id);
-    const tr=document.createElement('tr');
-    tr.className='inv-row'+(selId===inv.id?' active':'')+(inv.status==='Void'?' voided':'');
-    tr.innerHTML=`
-      <td style="font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary)"><span class="exp-icon ${isExp?'exp-open':''}">▶</span>${inv.id}</td>
-      <td style="font-weight:500">${inv.clinic}</td>
-      <td style="text-align:center;color:var(--color-text-secondary)">${inv.patients.length}</td>
-      <td style="text-align:center;color:var(--color-text-secondary)">${inv.patients.reduce((a,p)=>a+p.cpts.length,0)}</td>
-      <td>$${inv.totalBilled.toFixed(2)}</td>
-      <td style="font-weight:500">$${inv.invoiceAmt.toFixed(2)}</td>
-      <td>${inv.paid>0?'$'+inv.paid.toFixed(2):'—'}</td>
-      <td style="${bal>0?'color:#791F1F':''}">$${bal.toFixed(2)}</td>
-      <td>${invBadge(inv.status)}</td>
-      <td style="font-size:11px;color:var(--color-text-tertiary)">${inv.dueDate}</td>`;
-    tr.onclick=(e)=>{
-      const onExp=e.target.classList.contains('exp-icon')||e.target.closest('td')===tr.querySelector('td:first-child');
-      if(onExp){if(isExp)expInv.delete(inv.id);else expInv.add(inv.id);renderInvoices();return;}
-      if(selId===inv.id){closePanel();return;}
-      selId=inv.id; expInv.add(inv.id);
-      document.getElementById('inv-side').classList.add('open');
-      renderPanel(inv); renderInvoices();
-    };
-    tbody.appendChild(tr);
-    if(isExp){
-      inv.patients.forEach(pt=>{
-        const pk=inv.id+pt.name; const ptExp=expPt.has(pk);
-        const ptB=pt.cpts.reduce((a,c)=>a+c.billed,0); const ptP=pt.cpts.reduce((a,c)=>a+c.paid,0);
-        const ptr=document.createElement('tr'); ptr.className='pt-row'+(ptExp?' pt-open':'');
-        ptr.innerHTML=`
-          <td colspan="2"><span class="exp-icon ${ptExp?'exp-open':''}">▶</span><span style="font-weight:500">${pt.name}</span> <span style="font-size:10px;font-family:var(--font-mono);color:var(--color-text-tertiary)">${pt.insId}</span></td>
-          <td colspan="2" style="color:var(--color-text-tertiary);font-size:11px">${pt.claimId}</td>
-          <td>$${ptB.toFixed(2)}</td><td style="color:var(--color-text-tertiary)">—</td>
-          <td>${ptP>0?'$'+ptP.toFixed(2):'—'}</td>
-          <td style="${(ptB-ptP)>0?'color:#791F1F':''}">$${(ptB-ptP).toFixed(2)}</td>
-          <td colspan="2"><span style="font-size:11px;color:var(--color-text-tertiary)">${pt.cpts.length} CPT codes</span></td>`;
-        ptr.onclick=()=>{if(ptExp)expPt.delete(pk);else expPt.add(pk);renderInvoices();};
-        tbody.appendChild(ptr);
-        if(ptExp){
-          pt.cpts.forEach(cpt=>{
-            const cr=document.createElement('tr'); cr.className='cpt-row';
-            const cb=cpt.billed-cpt.paid;
-            cr.innerHTML=`<td colspan="2"><span style="font-family:var(--font-mono);font-weight:500">${cpt.code}</span></td><td colspan="2"></td><td>$${cpt.billed.toFixed(2)}</td><td></td><td>${cpt.paid>0?'$'+cpt.paid.toFixed(2):'—'}</td><td style="${cb>0?'color:#791F1F':''}">$${cb.toFixed(2)}</td><td colspan="2"></td>`;
-            tbody.appendChild(cr);
-          });
-        }
-      });
-    }
-  });
+function currentEntry() {
+  const { year, month } = offsetMonth(monthOffset)
+  return currentClinic().records.find(r => r.billingYear === year && r.billingMonth === month) ?? null
 }
 
-function renderPanel(inv){
-  document.getElementById('sp-title').textContent=inv.id;
-  const bal=inv.invoiceAmt-inv.paid;
-  let notice='';
-  if(inv.status==='Reissue') notice=`<div class="notice-reissue">EOB 재발행으로 금액이 변경됐습니다.<br><span style="font-size:11px;opacity:0.8">${inv.reissueNote||''}</span></div>`;
-  if(inv.status==='Settled'||inv.status==='Paid') notice=`<div class="notice-settled">정산 완료 — 수금이 확인됐습니다.</div>`;
-  const ptRows=inv.patients.map(pt=>{const b=pt.cpts.reduce((a,c)=>a+c.billed,0);const p=pt.cpts.reduce((a,c)=>a+c.paid,0);return `<tr><td style="font-weight:500">${pt.name}</td><td style="font-family:var(--font-mono);font-size:10px;color:var(--color-text-tertiary)">${pt.insId}</td><td style="text-align:center;color:var(--color-text-secondary)">${pt.cpts.length}</td><td>$${b.toFixed(2)}</td><td>${p>0?'$'+p.toFixed(2):'—'}</td></tr>`;}).join('');
-  const payHist=inv.payments.length?inv.payments.map(p=>`<div class="pay-row"><div><div class="pay-left">${p.date} · ${p.method}</div><div class="pay-ref">${p.ref}</div></div><div class="pay-amt">$${p.amount.toFixed(2)}</div></div>`).join(''):`<div style="font-size:12px;color:var(--color-text-tertiary);padding:4px 0">No payments recorded.</div>`;
-  const isSettled=inv.status==='Paid'||inv.status==='Settled';
-  const actions=isSettled?`<button class="sp-btn sp-btn-primary">↓ Download invoice (PDF)</button>`:inv.status==='Reissue'?`<button class="sp-btn sp-btn-amber">↓ Download updated invoice (PDF)</button><button class="sp-btn sp-btn-primary" onclick="alert('Payment recorded')">+ Record payment</button><button class="sp-btn" onclick="alert('Settled')">✓ Mark as settled</button>`:`<button class="sp-btn sp-btn-primary">↓ Download invoice (PDF)</button><button class="sp-btn sp-btn-primary" onclick="alert('Payment recorded')">+ Record payment</button><button class="sp-btn" onclick="alert('Settled')">✓ Mark as settled</button><button class="sp-btn sp-btn-danger" onclick="alert('Voided')">✕ Void invoice</button>`;
-  document.getElementById('sp-body').innerHTML=`
-    ${notice}
-    <div class="sp-sec"><div class="sp-lbl">Invoice info</div>
-      <table class="info-tbl">
-        <tr><td>Clinic</td><td style="font-weight:500">${inv.clinic}</td></tr>
-        <tr><td>Period</td><td>${inv.month}</td></tr>
-        <tr><td>Patients</td><td>${inv.patients.length} patients · ${inv.patients.reduce((a,p)=>a+p.cpts.length,0)} CPT lines</td></tr>
-        <tr><td>Total billed</td><td>$${inv.totalBilled.toFixed(2)}</td></tr>
-        <tr><td>Revenue split</td><td><div class="split-pills"><span class="sp-clinic">Clinic ${inv.split.c}%</span><span class="sp-hicare">Hicare ${inv.split.h}%</span></div></td></tr>
-        <tr><td>Invoice amount</td><td style="font-weight:500;font-size:14px">$${inv.invoiceAmt.toFixed(2)}</td></tr>
-        <tr><td>Paid</td><td>$${inv.paid.toFixed(2)}</td></tr>
-        <tr><td>Balance</td><td style="${bal>0?'color:#791F1F;font-weight:500':''}">$${bal.toFixed(2)}</td></tr>
-        <tr><td>Status</td><td>${invBadge(inv.status)}</td></tr>
-        <tr><td>Due date</td><td>${inv.dueDate}</td></tr>
-      </table>
-    </div>
-    <div class="sp-sec"><div class="sp-lbl">Patient breakdown</div>
-      <table class="pt-sum-tbl">
-        <thead><tr><th>Patient</th><th>Medicare ID</th><th style="text-align:center">CPTs</th><th>Billed</th><th>Ins. paid</th></tr></thead>
-        <tbody>${ptRows}</tbody>
-        <tfoot><tr><td colspan="3">Total</td><td>$${inv.totalBilled.toFixed(2)}</td><td>${inv.totalInsPaid>0?'$'+inv.totalInsPaid.toFixed(2):'—'}</td></tr></tfoot>
-      </table>
-    </div>
-    <div class="sp-sec"><div class="sp-lbl">Payment history</div>
-      ${payHist}
-      ${!isSettled?`<div class="pay-inp-row"><input type="number" placeholder="Amount" step="0.01"/><select><option>ACH</option><option>Check</option><option>Wire</option></select><input type="text" placeholder="Ref no."/><button class="pay-add" onclick="alert('Payment recorded')">+ Add</button></div>`:''}
-    </div>
-    <div class="sp-sec"><div class="sp-lbl">Actions</div>${actions}</div>`;
+// ══ Clinic List ═════════════════════════════════════════════════════════════
+function renderClinicList() {
+  const el = document.getElementById('clinic-list')
+  el.innerHTML = CLINICS.map(c => `
+    <button onclick="selectClinic(${c.id})"
+      class="w-full text-left px-3 py-2.5 rounded-lg text-xs transition flex items-center gap-2.5 border-none cursor-pointer
+        ${c.id === activeId ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-slate-600 hover:bg-slate-50 bg-transparent'}">
+      <span class="w-1.5 h-1.5 rounded-full flex-shrink-0 bg-emerald-500"></span>
+      <span class="flex-1 truncate">${c.name}</span>
+    </button>
+  `).join('')
 }
 
-function closePanel(){selId=null;document.getElementById('inv-side').classList.remove('open');renderInvoices();}
-
-function renderPayments(){
-  const tbody=document.getElementById('pay-tbody');
-  tbody.innerHTML='';
-  paymentLog.forEach(p=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td style="color:var(--color-text-tertiary)">${p.date}</td><td style="font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary)">${p.invId}</td><td style="font-weight:500">${p.clinic}</td><td>${p.method}</td><td style="font-family:var(--font-mono);font-size:11px;color:var(--color-text-tertiary)">${p.ref}</td><td style="font-weight:500">$${p.amount.toFixed(2)}</td><td>${p.settled?`<span class="badge b-settled">Settled</span>`:`<span class="badge b-partial">Partial</span>`}</td><td>${p.settled?'—':`<button style="font-size:11px;padding:4px 9px;border-radius:var(--border-radius-md);border:0.5px solid #185FA5;background:#E6F1FB;color:#0C447C;cursor:pointer;" onclick="alert('Settled')">Settle</button>`}</td>`;
-    tbody.appendChild(tr);
-  });
+function selectClinic(id) {
+  activeId = id
+  monthOffset = 0
+  renderClinicList()
+  const clinic = currentClinic()
+  // header
+  document.getElementById('clinic-name').textContent = clinic.name
+  document.getElementById('service-badges').innerHTML = clinic.services.map(s =>
+    `<span class="text-xs font-semibold px-2 py-0.5 rounded-full ${s === 'RPM' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}">${s}</span>`
+  ).join('')
+  // service blocks
+  document.getElementById('rpm-block').style.opacity = clinic.services.includes('RPM') ? '1' : '0.4'
+  document.getElementById('rpm-block').style.pointerEvents = clinic.services.includes('RPM') ? '' : 'none'
+  document.getElementById('ccm-block').style.opacity = clinic.services.includes('CCM') ? '1' : '0.4'
+  document.getElementById('ccm-block').style.pointerEvents = clinic.services.includes('CCM') ? '' : 'none'
+  // split labels
+  document.getElementById('rpm-split-label').textContent = `Clinic ${clinic.rpmSplit[0]}% · Hicare ${clinic.rpmSplit[1]}%`
+  document.getElementById('ccm-split-label').textContent = `Clinic ${clinic.ccmSplit[0]}% · Hicare ${clinic.ccmSplit[1]}%`
+  // CI split blocks
+  document.getElementById('ci-rpm-split-block').style.display = clinic.services.includes('RPM') ? '' : 'none'
+  document.getElementById('ci-ccm-split-block').style.display = clinic.services.includes('CCM') ? '' : 'none'
+  // history title
+  document.getElementById('history-title').textContent = `Entry History — ${clinic.name}`
+  renderMonth()
+  if (activeTab === 'history') renderHistory()
 }
 
-function renderUnmatched(){
-  const rem=unmatchedData.filter(u=>!u.matched);
-  document.getElementById('unmatched-cnt').textContent=rem.length;
-  document.getElementById('unmatched-lbl').textContent=rem.length+' items';
-  const tbody=document.getElementById('unmatched-tbody');
-  tbody.innerHTML='';
-  rem.forEach(u=>{
-    const opts=claimOpts.map(c=>`<option>${c}</option>`).join('');
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td style="font-family:var(--font-mono);font-size:11px">${u.medicareId}</td><td style="color:var(--color-text-secondary)">${u.patient}</td><td style="font-family:var(--font-mono);font-size:11px">${u.cpt}</td><td style="font-weight:500">$${u.amount.toFixed(2)}</td><td><select class="match-sel"><option value="">— Select claim —</option>${opts}</select></td><td><button class="match-btn" onclick="doMatch(${u.id},this)">Match</button></td>`;
-    tbody.appendChild(tr);
-  });
-  if(!rem.length) tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:20px;font-size:12px;color:var(--color-text-tertiary)">All claims matched.</td></tr>`;
+// ══ Tab ═════════════════════════════════════════════════════════════════════
+function switchTab(tab) {
+  activeTab = tab
+  document.getElementById('panel-invoice').classList.toggle('hidden', tab !== 'invoice')
+  document.getElementById('panel-history').classList.toggle('hidden', tab !== 'history')
+  const activeStyle  = 'text-[13px] px-4 py-2.5 border-b-2 border-primary font-medium text-slate-900 bg-transparent cursor-pointer transition-all'
+  const inactiveStyle = 'text-[13px] px-4 py-2.5 border-b-2 border-transparent text-slate-500 hover:text-slate-700 bg-transparent cursor-pointer transition-all'
+  document.getElementById('tab-invoice').className = tab === 'invoice' ? activeStyle : inactiveStyle
+  document.getElementById('tab-history').className  = tab === 'history'  ? activeStyle : inactiveStyle
+  if (tab === 'history') renderHistory()
 }
 
-function doMatch(id,btn){const sel=btn.closest('tr').querySelector('.match-sel').value;if(!sel){alert('Select a claim first.');return;}unmatchedData.find(u=>u.id===id).matched=true;renderUnmatched();}
+// ══ Month Navigator ══════════════════════════════════════════════════════════
+function changeMonth(dir) { monthOffset += dir; renderMonth() }
+function goToday()        { monthOffset = 0;    renderMonth() }
 
-function renderAll(){renderSummary();renderInvoices();renderPayments();renderUnmatched();}
-renderAll();
+function renderMonth() {
+  const { year, month } = offsetMonth(monthOffset)
+  document.getElementById('month-label').textContent = MONTHS_LONG[month-1] + ' ' + year
+  // Today button
+  document.getElementById('today-btn').style.visibility = monthOffset !== 0 ? 'visible' : 'hidden'
+  // Paid badge
+  const entry = currentEntry()
+  const isPaid = entry?.status === 'paid'
+  const badge  = document.getElementById('paid-badge')
+  badge.textContent = isPaid ? 'Paid' : 'Unpaid'
+  badge.className   = `text-[11px] px-2.5 py-1 rounded-full ${isPaid ? 'bg-[#EAF3DE] text-[#27500A]' : 'bg-[#FCEBEB] text-[#791F1F]'}`
+  // Pre-populate fields from DB record
+  populateFromEntry(entry)
+  updateInvoiceCalc()
+  // CI badge
+  renderCISavedBadge(entry)
+  // hide autosave
+  const as = document.getElementById('autosave-status')
+  as.classList.add('hidden')
+  as.classList.remove('flex')
+}
+
+function populateFromEntry(entry) {
+  document.getElementById('rpm-invoice').value = entry?.rpmInvoice ?? ''
+  document.getElementById('ccm-invoice').value = entry?.ccmInvoice ?? ''
+  document.getElementById('rpm-pts').value     = entry?.rpmPts ?? ''
+  document.getElementById('ccm-pts').value     = entry?.ccmPts ?? ''
+  document.getElementById('ci-total-amt').value = entry?.ciAmount != null ? String(entry.ciAmount) : ''
+  document.getElementById('ci-date').value      = entry?.ciDate ?? ''
+  document.getElementById('ci-method').value    = entry?.ciMethod ?? ''
+  document.getElementById('ci-ref').value       = entry?.ciReference ?? ''
+  document.getElementById('ci-remark').value    = entry?.ciRemark ?? ''
+}
+
+function renderCISavedBadge(entry) {
+  const badge = document.getElementById('ci-saved-badge')
+  if (entry?.ciAmount != null && !ciOpen) {
+    badge.textContent = `Saved ${fmt(entry.ciAmount)}`
+    badge.classList.remove('hidden')
+  } else {
+    badge.classList.add('hidden')
+  }
+}
+
+// ══ Invoice Calc ═════════════════════════════════════════════════════════════
+function onFieldChange() {
+  updateInvoiceCalc()
+  startAutoSave()
+}
+
+function updateInvoiceCalc() {
+  const clinic = currentClinic()
+  const rpm = parseFloat(document.getElementById('rpm-invoice').value) || 0
+  const ccm = parseFloat(document.getElementById('ccm-invoice').value) || 0
+  const total = rpm + ccm
+  const fee = clinic.billerFeeType === 'pct' ? total * (clinic.billerFeeVal / 100) : clinic.billerFeeVal
+  const feeLabel = clinic.billerFeeType === 'pct' ? `${clinic.billerFeeVal}% of total` : `Fixed $${clinic.billerFeeVal}`
+
+  const rClinic = rpm * (clinic.rpmSplit[0] / 100)
+  const rHicare = rpm * (clinic.rpmSplit[1] / 100)
+  const cClinic = ccm * (clinic.ccmSplit[0] / 100)
+  const cHicare = ccm * (clinic.ccmSplit[1] / 100)
+
+  // RPM calc box
+  const rpmCalc = document.getElementById('rpm-calc')
+  if (rpm > 0 && clinic.services.includes('RPM')) {
+    rpmCalc.innerHTML = calcRow('Clinic share', fmt(rClinic)) + calcRow('Hicare share', fmt(rHicare))
+    rpmCalc.classList.remove('hidden')
+  } else rpmCalc.classList.add('hidden')
+
+  // CCM calc box
+  const ccmCalc = document.getElementById('ccm-calc')
+  if (ccm > 0 && clinic.services.includes('CCM')) {
+    ccmCalc.innerHTML = calcRow('Clinic share', fmt(cClinic)) + calcRow('Hicare share', fmt(cHicare))
+    ccmCalc.classList.remove('hidden')
+  } else ccmCalc.classList.add('hidden')
+
+  // Total card
+  const totalCard = document.getElementById('invoice-total-card')
+  if (total > 0) {
+    totalCard.innerHTML = [
+      totalRow('Total invoice',            fmt(total),                    'text-[#0C447C]', false),
+      totalRow('Total clinic amount',      fmt(rClinic + cClinic),        '',               false),
+      totalRow(`Biller fee (${feeLabel})`, `− ${fmt(fee)}`,              'text-[#791F1F]', false),
+      totalRow('Total Hicare amount',      fmt(rHicare + cHicare - fee), '',               true),
+    ].join('')
+    totalCard.classList.remove('hidden')
+    totalCard.style.display = 'flex'
+  } else {
+    totalCard.classList.add('hidden')
+  }
+
+  // Info text
+  const infoText = `Split ratios from clinic settings · RPM ${clinic.rpmSplit[0]}/${clinic.rpmSplit[1]} · CCM ${clinic.ccmSplit[0]}/${clinic.ccmSplit[1]} · ${clinic.billerFeeType === 'pct' ? `Biller fee ${clinic.billerFeeVal}%` : `Biller fee $${clinic.billerFeeVal} fixed`}`
+  document.getElementById('invoice-info-text').textContent = infoText
+
+  // Update CI expected hint
+  const rpmExpected = rHicare
+  const ccmExpected = cHicare
+  const totalExpected = rpmExpected + ccmExpected - fee
+  document.getElementById('ci-expected-hint').textContent = `Expected: ${fmt(totalExpected)}`
+  document.getElementById('ci-rpm-hint').textContent = `Expected: ${fmt(rpmExpected)}`
+  document.getElementById('ci-ccm-hint').textContent = `Expected: ${fmt(ccmExpected)}`
+}
+
+function calcRow(label, value) {
+  return `<div class="flex items-center gap-3 py-0.5 text-[12px]">
+    <span class="text-slate-500 shrink-0">${label}</span>
+    <span class="font-mono text-slate-800">${value}</span>
+  </div>`
+}
+
+function totalRow(label, value, colorCls, bold) {
+  return `<div class="flex justify-between items-center py-0.5 text-[13px] ${bold ? 'font-medium border-t border-slate-200 mt-1.5 pt-2.5' : ''}">
+    <span class="text-slate-500">${label}</span>
+    <span class="font-mono ${colorCls || 'text-slate-800'}">${value}</span>
+  </div>`
+}
+
+// ══ Auto Save ════════════════════════════════════════════════════════════════
+function startAutoSave() {
+  clearTimeout(autoSaveTimer)
+  const rpm = parseFloat(document.getElementById('rpm-invoice').value) || 0
+  const ccm = parseFloat(document.getElementById('ccm-invoice').value) || 0
+  if (!rpm && !ccm) return
+  setAutoSaveState('saving')
+  autoSaveTimer = setTimeout(() => doAutoSave(), 800)
+}
+
+function setAutoSaveState(state) {
+  const el = document.getElementById('autosave-status')
+  if (state === 'idle') {
+    el.classList.add('hidden'); el.classList.remove('flex')
+  } else if (state === 'saving') {
+    el.classList.remove('hidden'); el.classList.add('flex')
+    el.className = el.className.replace(/text-\S+/, '')
+    el.innerHTML = `<span class="material-symbols-outlined text-[14px] anim-spin">progress_activity</span><span class="text-[11px] text-slate-400 ml-1">Saving…</span>`
+  } else if (state === 'saved') {
+    el.classList.remove('hidden'); el.classList.add('flex')
+    el.innerHTML = `<span class="material-symbols-outlined text-[14px] icon-filled text-[#27500A]">check_circle</span><span class="text-[11px] text-[#27500A] ml-1">Saved</span>`
+    setTimeout(() => setAutoSaveState('idle'), 2000)
+  }
+}
+
+function doAutoSave() {
+  const clinic = currentClinic()
+  const { year, month } = offsetMonth(monthOffset)
+  const rpm = parseFloat(document.getElementById('rpm-invoice').value) || 0
+  const ccm = parseFloat(document.getElementById('ccm-invoice').value) || 0
+  const rpmPts = parseFloat(document.getElementById('rpm-pts').value) || 0
+  const ccmPts = parseFloat(document.getElementById('ccm-pts').value) || 0
+  // mockup: upsert in local records
+  let entry = clinic.records.find(r => r.billingYear === year && r.billingMonth === month)
+  if (entry) {
+    entry.rpmInvoice = rpm; entry.ccmInvoice = ccm; entry.rpmPts = rpmPts; entry.ccmPts = ccmPts
+  } else {
+    clinic.records.push({ id: 'r'+Date.now(), billingYear:year, billingMonth:month, rpmInvoice:rpm, ccmInvoice:ccm, rpmPts, ccmPts, ciAmount:null, ciDate:null, ciMethod:null, ciReference:null, ciRemark:null, status:'unpaid' })
+  }
+  setAutoSaveState('saved')
+}
+
+// ══ CI ════════════════════════════════════════════════════════════════════
+function toggleCI() {
+  ciOpen = !ciOpen
+  document.getElementById('ci-form').classList.toggle('hidden', !ciOpen)
+  document.getElementById('ci-chevron').style.transform = ciOpen ? 'rotate(180deg)' : ''
+  const entry = currentEntry()
+  renderCISavedBadge(entry)
+  updateCICalc()
+}
+
+function setCIMode(mode) {
+  ciMode = mode
+  document.getElementById('ci-total-mode').classList.toggle('hidden', mode !== 'total')
+  document.getElementById('ci-split-mode').classList.toggle('hidden', mode !== 'split')
+  const activeBtn = mode === 'total' ? 'mode-total-btn' : 'mode-split-btn'
+  const inactiveBtn = mode === 'total' ? 'mode-split-btn' : 'mode-total-btn'
+  document.getElementById(activeBtn).className  = 'text-[12px] px-3.5 py-1.5 cursor-pointer border-none bg-[#E6F1FB] text-[#0C447C] font-medium'
+  document.getElementById(inactiveBtn).className = 'text-[12px] px-3.5 py-1.5 cursor-pointer border-none border-l border-slate-200 bg-slate-50 text-slate-500'
+}
+
+function getExpected() {
+  const clinic = currentClinic()
+  const rpm = parseFloat(document.getElementById('rpm-invoice').value) || 0
+  const ccm = parseFloat(document.getElementById('ccm-invoice').value) || 0
+  const total = rpm + ccm
+  const fee = clinic.billerFeeType === 'pct' ? total * (clinic.billerFeeVal / 100) : clinic.billerFeeVal
+  const rHicare = rpm * (clinic.rpmSplit[1] / 100)
+  const cHicare = ccm * (clinic.ccmSplit[1] / 100)
+  return { totalExpected: rHicare + cHicare - fee, rpmExpected: rHicare, ccmExpected: cHicare }
+}
+
+function updateCICalc() {
+  const { totalExpected, rpmExpected, ccmExpected } = getExpected()
+  const ciAmt = parseFloat(document.getElementById('ci-total-amt').value) || 0
+  const uncollected = totalExpected - ciAmt
+  const summary = document.getElementById('ci-total-summary')
+  if (ciAmt > 0) {
+    summary.innerHTML = [
+      totalRow('Expected (HicareNet)', fmt(totalExpected), 'text-[#0C447C]', false),
+      totalRow('Received',             fmt(ciAmt),         'text-[#27500A]', false),
+      totalRow('Uncollected',          fmt(uncollected),   uncollected > 0 ? 'text-[#791F1F]' : 'text-[#27500A]', true),
+    ].join('')
+    summary.classList.remove('hidden'); summary.style.display = 'flex'
+  } else {
+    summary.classList.add('hidden')
+  }
+}
+
+function updateCISplitCalc() {
+  const { totalExpected, rpmExpected, ccmExpected } = getExpected()
+  const rpmReceived = parseFloat(document.getElementById('ci-rpm-amt').value) || 0
+  const ccmReceived = parseFloat(document.getElementById('ci-ccm-amt').value) || 0
+  const totalReceived = rpmReceived + ccmReceived
+
+  const rpmCalc = document.getElementById('ci-rpm-calc')
+  if (rpmReceived > 0) {
+    rpmCalc.innerHTML = [
+      calcRow('Expected', fmt(rpmExpected)),
+      calcRow('Received', fmt(rpmReceived)),
+      `<div class="flex items-center gap-3 py-0.5 text-[12px] border-t border-slate-200 mt-1.5 pt-1.5">
+        <span class="text-slate-500 shrink-0">Uncollected</span>
+        <span class="font-mono ${rpmExpected - rpmReceived > 0 ? 'text-[#791F1F]' : 'text-[#27500A]'}">${fmt(rpmExpected - rpmReceived)}</span>
+      </div>`,
+    ].join('')
+    rpmCalc.classList.remove('hidden'); rpmCalc.style.display = 'flex'
+  } else rpmCalc.classList.add('hidden')
+
+  const ccmCalc = document.getElementById('ci-ccm-calc')
+  if (ccmReceived > 0) {
+    ccmCalc.innerHTML = [
+      calcRow('Expected', fmt(ccmExpected)),
+      calcRow('Received', fmt(ccmReceived)),
+      `<div class="flex items-center gap-3 py-0.5 text-[12px] border-t border-slate-200 mt-1.5 pt-1.5">
+        <span class="text-slate-500 shrink-0">Uncollected</span>
+        <span class="font-mono ${ccmExpected - ccmReceived > 0 ? 'text-[#791F1F]' : 'text-[#27500A]'}">${fmt(ccmExpected - ccmReceived)}</span>
+      </div>`,
+    ].join('')
+    ccmCalc.classList.remove('hidden'); ccmCalc.style.display = 'flex'
+  } else ccmCalc.classList.add('hidden')
+
+  const { totalExpected: te } = getExpected()
+  const splitSummary = document.getElementById('ci-split-summary')
+  if (totalReceived > 0) {
+    splitSummary.innerHTML = [
+      totalRow('Total expected (HicareNet)', fmt(te),                   'text-[#0C447C]', false),
+      totalRow('Total received',             fmt(totalReceived),         'text-[#27500A]', false),
+      totalRow('Total uncollected',          fmt(te - totalReceived),   te - totalReceived > 0 ? 'text-[#791F1F]' : 'text-[#27500A]', true),
+    ].join('')
+    splitSummary.classList.remove('hidden'); splitSummary.style.display = 'flex'
+  } else splitSummary.classList.add('hidden')
+}
+
+function saveCI() {
+  const clinic = currentClinic()
+  const { year, month } = offsetMonth(monthOffset)
+  let entry = clinic.records.find(r => r.billingYear === year && r.billingMonth === month)
+  if (!entry) {
+    entry = { id:'r'+Date.now(), billingYear:year, billingMonth:month, rpmInvoice:0, ccmInvoice:0, rpmPts:0, ccmPts:0, ciAmount:null, ciDate:null, ciMethod:null, ciReference:null, ciRemark:null, status:'unpaid' }
+    clinic.records.push(entry)
+  }
+  if (ciMode === 'total') {
+    const amt = parseFloat(document.getElementById('ci-total-amt').value) || 0
+    entry.ciAmount    = amt > 0 ? amt : null
+    entry.ciDate      = document.getElementById('ci-date').value || null
+    entry.ciMethod    = document.getElementById('ci-method').value || null
+    entry.ciReference = document.getElementById('ci-ref').value || null
+    entry.ciRemark    = document.getElementById('ci-remark').value || null
+    entry.status      = amt > 0 ? 'paid' : 'unpaid'
+  } else {
+    const rpm = parseFloat(document.getElementById('ci-rpm-amt').value) || 0
+    const ccm = parseFloat(document.getElementById('ci-ccm-amt').value) || 0
+    const total = rpm + ccm
+    entry.ciAmount = total > 0 ? total : null
+    entry.ciRemark = document.getElementById('ci-split-remark').value || null
+    entry.status   = total > 0 ? 'paid' : 'unpaid'
+  }
+  // show saved confirmation
+  const confirm = document.getElementById('ci-saved-confirm')
+  confirm.classList.remove('hidden'); confirm.style.display = 'flex'
+  setTimeout(() => { confirm.classList.add('hidden'); confirm.style.display = '' }, 2000)
+  // update paid badge
+  const isPaid = entry.status === 'paid'
+  const badge = document.getElementById('paid-badge')
+  badge.textContent = isPaid ? 'Paid' : 'Unpaid'
+  badge.className   = `text-[11px] px-2.5 py-1 rounded-full ${isPaid ? 'bg-[#EAF3DE] text-[#27500A]' : 'bg-[#FCEBEB] text-[#791F1F]'}`
+}
+
+// ══ Entry History ═════════════════════════════════════════════════════════
+function renderHistory() {
+  const clinic   = currentClinic()
+  const records  = [...clinic.records].sort((a,b) => b.billingYear !== a.billingYear ? b.billingYear - a.billingYear : b.billingMonth - a.billingMonth)
+  const tbody    = document.getElementById('history-body')
+  if (records.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" class="text-center py-10 text-sm text-slate-400">No entries yet for ${clinic.name}</td></tr>`
+    return
+  }
+  tbody.innerHTML = records.map(r => {
+    const rpmInv    = r.rpmInvoice ?? 0
+    const ccmInv    = r.ccmInvoice ?? 0
+    const totalInv  = rpmInv + ccmInv
+    const uncol     = r.ciAmount != null ? totalInv - r.ciAmount : totalInv
+    const period    = MONTHS_SHORT[r.billingMonth-1] + ' ' + r.billingYear
+    const isPaid    = r.status === 'paid'
+    return `
+      <tr class="border-b border-slate-50 hover:bg-slate-50/60 transition">
+        <td class="px-4 py-3 text-[13px]">${period}</td>
+        <td class="px-4 py-3 font-mono text-[12px] text-slate-600">${rpmInv > 0 ? fmt(rpmInv) : '—'}</td>
+        <td class="px-4 py-3 font-mono text-[12px] text-slate-600">${ccmInv > 0 ? fmt(ccmInv) : '—'}</td>
+        <td class="px-4 py-3 font-mono text-[12px] text-slate-600">${fmt(totalInv)}</td>
+        <td class="px-4 py-3 font-mono text-[12px] text-slate-600">${r.ciAmount != null ? fmt(r.ciAmount) : '—'}</td>
+        <td class="px-4 py-3 font-mono text-[12px] ${uncol > 0 ? 'text-[#791F1F]' : 'text-slate-600'}">${fmt(uncol)}</td>
+        <td class="px-4 py-3">
+          <span class="text-[11px] px-2.5 py-1 rounded-full ${isPaid ? 'bg-[#EAF3DE] text-[#27500A]' : 'bg-[#FCEBEB] text-[#791F1F]'}">
+            ${isPaid ? 'Paid' : 'Unpaid'}
+          </span>
+        </td>
+        <td class="px-4 py-3 text-right">
+          <button class="text-[11px] px-2.5 py-1 border border-[#3B6D11] bg-[#EAF3DE] text-[#27500A] rounded-md cursor-pointer hover:bg-[#d5eabf] transition">
+            Edit
+          </button>
+        </td>
+      </tr>
+    `
+  }).join('')
+}
 </script>
+</body>
+</html>
