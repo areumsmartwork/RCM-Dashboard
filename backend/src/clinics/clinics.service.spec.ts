@@ -83,7 +83,9 @@ describe('ClinicsService', () => {
 
     it('throws NotFoundException when clinic not found', async () => {
       mockRepo.findOne.mockResolvedValue(null);
-      await expect(service.findOne('missing-id')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('missing-id')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -93,9 +95,13 @@ describe('ClinicsService', () => {
       mockRepo.update.mockResolvedValue({ affected: 1 });
       mockRepo.findOne.mockResolvedValue({ ...clinic, name: 'Updated Clinic' });
 
-      const result = await service.update('clinic-1', { name: 'Updated Clinic' });
+      const result = await service.update('clinic-1', {
+        name: 'Updated Clinic',
+      });
 
-      expect(mockRepo.update).toHaveBeenCalledWith('clinic-1', { name: 'Updated Clinic' });
+      expect(mockRepo.update).toHaveBeenCalledWith('clinic-1', {
+        name: 'Updated Clinic',
+      });
       expect(result.name).toBe('Updated Clinic');
     });
 
@@ -103,7 +109,9 @@ describe('ClinicsService', () => {
       mockRepo.update.mockResolvedValue({ affected: 0 });
       mockRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.update('missing-id', { name: 'X' })).rejects.toThrow(NotFoundException);
+      await expect(service.update('missing-id', { name: 'X' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -115,7 +123,7 @@ describe('ClinicsService', () => {
 
       expect(mockRepo.update).toHaveBeenCalledWith(
         'clinic-1',
-        expect.objectContaining({ lastSyncedAt: expect.any(Date) }),
+        expect.objectContaining({ lastSyncedAt: expect.any(Date) as Date }),
       );
     });
   });
