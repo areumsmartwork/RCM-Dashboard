@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BillerFeeHistory } from './entities/biller-fee-history.entity';
+import { CreateBillerFeeDto } from './dto/create-biller-fee.dto';
 
 @Injectable()
 export class BillerFeeService {
@@ -17,7 +18,7 @@ export class BillerFeeService {
     });
   }
 
-  create(data: Partial<BillerFeeHistory>): Promise<BillerFeeHistory> {
-    return this.repo.save(this.repo.create(data));
+  create(clinicId: string, dto: CreateBillerFeeDto): Promise<BillerFeeHistory> {
+    return this.repo.save(this.repo.create({ ...dto, clinicId }));
   }
 }

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RevenueSplitHistory } from './entities/revenue-split-history.entity';
 import { ServiceType } from '../clinics/entities/clinic.entity';
+import { CreateRevenueSplitDto } from './dto/create-revenue-split.dto';
 
 @Injectable()
 export class RevenueSplitService {
@@ -28,7 +29,7 @@ export class RevenueSplitService {
     });
   }
 
-  create(data: Partial<RevenueSplitHistory>): Promise<RevenueSplitHistory> {
-    return this.repo.save(this.repo.create(data));
+  create(clinicId: string, dto: CreateRevenueSplitDto): Promise<RevenueSplitHistory> {
+    return this.repo.save(this.repo.create({ ...dto, clinicId }));
   }
 }

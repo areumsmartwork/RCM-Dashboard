@@ -1,30 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  InvoiceEntry,
-  EntryStatus,
-  CiMethod,
-} from './entities/invoice-entry.entity';
-
-export interface SaveInvoiceDto {
-  clinicId: string;
-  billingYear: number;
-  billingMonth: number;
-  rpmInvoice?: number | null;
-  ccmInvoice?: number | null;
-  rpmPts?: number | null;
-  ccmPts?: number | null;
-}
-
-export interface SaveCiDto {
-  ciAmount?: number | null;
-  ciDate?: string | null;
-  ciMethod?: CiMethod | null;
-  ciReference?: string | null;
-  ciRemark?: string | null;
-  status?: EntryStatus;
-}
+import { InvoiceEntry, EntryStatus } from './entities/invoice-entry.entity';
+import { SaveInvoiceDto } from './dto/save-invoice.dto';
+import { SaveCiDto } from './dto/save-ci.dto';
 
 @Injectable()
 export class InvoiceEntryService {

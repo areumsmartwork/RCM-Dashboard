@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Patch, Param, Body } from '@nestjs/common';
 import { InvoiceEntryService } from './invoice-entry.service';
-import type { SaveInvoiceDto, SaveCiDto } from './invoice-entry.service';
+import { SaveInvoiceDto } from './dto/save-invoice.dto';
+import { SaveCiDto } from './dto/save-ci.dto';
 import type { EntryStatus } from './entities/invoice-entry.entity';
 
 @Controller('invoice-entries')

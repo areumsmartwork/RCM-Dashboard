@@ -56,6 +56,24 @@ npm run start:prod  # 프로덕션
 
 ---
 
+## 아키텍처 원칙
+
+각 도메인 모듈은 **Controller → Service → Repository** 3계층으로 엄격히 분리됩니다.
+
+| 계층 | 역할 | 금지 사항 |
+|---|---|---|
+| Controller | HTTP 파라미터 파싱 → Service 호출 → 결과 반환 | 비즈니스 로직, DB 직접 접근 |
+| Service | 비즈니스 로직, 트랜잭션, 유효성 검사 | HTTP 컨텍스트 (`@Req`, `@Res`) |
+| Repository | TypeORM Entity I/O만 | 비즈니스 판단 |
+
+### DTO 규칙
+
+- `@Body()` 타입은 반드시 `dto/` 폴더의 **class DTO**를 사용합니다. `Partial<Entity>`를 컨트롤러 body 타입으로 직접 쓰지 않습니다.
+- Route param(`clinicId` 등)을 body에 병합하는 작업(`{ ...body, clinicId }`)은 **Service에서** 처리합니다. Controller는 param과 body를 분리된 인수로 Service에 넘깁니다.
+- `class-validator` + `class-transformer`를 설치하면 DTO에 데코레이터를 추가하고 `main.ts`에 `ValidationPipe`를 활성화해 런타임 검증을 적용할 수 있습니다.
+
+---
+
 ## 프로젝트 구조
 
 ```
@@ -64,22 +82,39 @@ src/
 ├── main.ts                        # 진입점 — CORS, /api prefix
 │
 ├── clinics/                       # 클리닉 기본 정보
+│   ├── dto/
+│   │   └── update-clinic.dto.ts
 │   ├── entities/clinic.entity.ts
 │   ├── clinics.module.ts
 │   ├── clinics.service.ts
+│   ├── clinics.service.spec.ts    # 단위 테스트
 │   └── clinics.controller.ts
 │
 ├── revenue-split/                 # 수익 분배 이력
+│   ├── dto/
+│   │   └── create-revenue-split.dto.ts
 │   ├── entities/revenue-split-history.entity.ts
 │   ├── revenue-split.module.ts
 │   ├── revenue-split.service.ts
 │   └── revenue-split.controller.ts
 │
-└── biller-fee/                    # 빌러 수수료 이력
-    ├── entities/biller-fee-history.entity.ts
-    ├── biller-fee.module.ts
-    ├── biller-fee.service.ts
-    └── biller-fee.controller.ts
+├── biller-fee/                    # 빌러 수수료 이력
+│   ├── dto/
+│   │   └── create-biller-fee.dto.ts
+│   ├── entities/biller-fee-history.entity.ts
+│   ├── biller-fee.module.ts
+│   ├── biller-fee.service.ts
+│   └── biller-fee.controller.ts
+│
+└── invoice-entry/                 # 월별 청구 입력 + HicareNet 입금 확인
+    ├── dto/
+    │   ├── save-invoice.dto.ts
+    │   └── save-ci.dto.ts
+    ├── entities/invoice-entry.entity.ts
+    ├── invoice-entry.module.ts
+    ├── invoice-entry.service.ts
+    ├── invoice-entry.service.spec.ts  # 단위 테스트
+    └── invoice-entry.controller.ts
 ```
 
 ---
@@ -142,11 +177,35 @@ src/
 | `changed_by` | varchar | 변경자 |
 | `changed_at` | timestamp | 변경일시 |
 
+### invoice_entries
+
+클리닉별 월별 청구 입력 + HicareNet 입금 확인 레코드. `(clinic_id, billing_year, billing_month)` 조합은 UNIQUE.
+
+| 컬럼 | 타입 | 설명 |
+|---|---|---|
+| `id` | varchar(36) PK | UUID |
+| `clinic_id` | varchar(36) FK | clinics.id |
+| `billing_year` | smallint | 청구 연도 |
+| `billing_month` | tinyint | 청구 월 (1–12) |
+| `rpm_invoice` | decimal(12,2) | RPM 청구 금액 |
+| `ccm_invoice` | decimal(12,2) | CCM 청구 금액 |
+| `rpm_pts` | smallint | RPM 환자 수 |
+| `ccm_pts` | smallint | CCM 환자 수 |
+| `ci_amount` | decimal(12,2) | HicareNet 실 입금액 |
+| `ci_date` | date | 입금일 |
+| `ci_method` | varchar | `ACH` · `Zelle` · `Check` |
+| `ci_reference` | varchar | 참조 번호 (Check # 등) |
+| `ci_remark` | text | 비고 |
+| `status` | varchar | `unpaid` · `paid` |
+| `created_at` | timestamp | 생성일 |
+| `updated_at` | timestamp | 수정일 |
+
 ### 관계
 
 ```
 clinics 1 ──< N revenue_split_history
 clinics 1 ──< N biller_fee_history
+clinics 1 ──< N invoice_entries
 ```
 
 ---
@@ -178,6 +237,16 @@ Base URL: `http://localhost:3001/api`
 |---|---|---|
 | `GET` | `/clinics/:clinicId/biller-fee` | 수수료 이력 |
 | `POST` | `/clinics/:clinicId/biller-fee` | 새 수수료 등록 |
+
+### Invoice Entry
+
+| Method | Path | 설명 |
+|---|---|---|
+| `GET` | `/invoice-entries/clinic/:clinicId` | 클리닉 전체 입력 이력 |
+| `GET` | `/invoice-entries/clinic/:clinicId/:year/:month` | 특정 월 단건 조회 |
+| `POST` | `/invoice-entries` | Invoice 저장 (upsert — 없으면 생성, 있으면 업데이트) |
+| `PATCH` | `/invoice-entries/:id/ci` | HicareNet 입금(CI) 저장 |
+| `PATCH` | `/invoice-entries/:id/status` | 상태 변경 (`paid` / `unpaid`) |
 
 ---
 

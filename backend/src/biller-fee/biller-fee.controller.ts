@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Param, Body } from '@nestjs/common';
 import { BillerFeeService } from './biller-fee.service';
 import { BillerFeeHistory } from './entities/biller-fee-history.entity';
+import { CreateBillerFeeDto } from './dto/create-biller-fee.dto';
 
 @Controller('clinics/:clinicId/biller-fee')
 export class BillerFeeController {
@@ -14,8 +15,8 @@ export class BillerFeeController {
   @Post()
   create(
     @Param('clinicId') clinicId: string,
-    @Body() body: Partial<BillerFeeHistory>,
+    @Body() body: CreateBillerFeeDto,
   ): Promise<BillerFeeHistory> {
-    return this.service.create({ ...body, clinicId });
+    return this.service.create(clinicId, body);
   }
 }

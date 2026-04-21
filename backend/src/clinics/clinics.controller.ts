@@ -1,6 +1,7 @@
 import { Controller, Get, Patch, Param, Body } from '@nestjs/common';
 import { ClinicsService } from './clinics.service';
 import { Clinic } from './entities/clinic.entity';
+import { UpdateClinicDto } from './dto/update-clinic.dto';
 
 @Controller('clinics')
 export class ClinicsController {
@@ -19,7 +20,7 @@ export class ClinicsController {
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @Body() body: Partial<Clinic>,
+    @Body() body: UpdateClinicDto,
   ): Promise<Clinic> {
     return this.service.update(id, body);
   }
