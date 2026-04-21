@@ -1,4 +1,10 @@
-import type { CalcRow } from '../../lib/billingCalcs'
+// CalcRow is owned by this component — no dependency on domain libs
+export interface CalcRow {
+  label:      string
+  value:      string
+  color?:     string
+  separator?: boolean
+}
 
 export interface CalcBoxProps {
   rows: CalcRow[]

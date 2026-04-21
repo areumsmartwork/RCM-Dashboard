@@ -1,6 +1,6 @@
-import type { CalcRow } from '../../lib/billingCalcs'
-import { MoneyInput }   from './MoneyInput'
-import { CalcBox }      from './CalcBox'
+import { MoneyInput }        from './MoneyInput'
+import { CalcBox }           from './CalcBox'
+import type { CalcRow }      from './CalcBox'    // prop type from co-located component
 
 export interface ServiceBlockProps {
   type:       'RPM' | 'CCM'

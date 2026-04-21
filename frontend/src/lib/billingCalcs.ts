@@ -1,18 +1,10 @@
 import type { BillingClinic } from '../pages/billing/data'
 
-export interface CalcRow {
-  label:      string
-  value:      string
-  color?:     string
-  separator?: boolean
-}
-
-export interface TotalRow {
-  label:  string
-  value:  string
-  color?: string
-  bold?:  boolean
-}
+// CalcRow / TotalRow are internal to this module.
+// Components (CalcBox, TotalCard) define their own structurally-compatible types.
+// TypeScript's structural typing ensures compatibility without a shared import.
+interface CalcRow  { label: string; value: string; color?: string; separator?: boolean }
+interface TotalRow { label: string; value: string; color?: string; bold?: boolean }
 
 export interface BillingCalcs {
   rpm:              number
@@ -34,9 +26,9 @@ export const fmtMoney = (n: number) =>
   '$' + Math.round(n).toLocaleString('en-US')
 
 export function calcBilling(
-  clinic:      BillingClinic,
-  rpmInvoice:  string,
-  ccmInvoice:  string,
+  clinic:     BillingClinic,
+  rpmInvoice: string,
+  ccmInvoice: string,
 ): BillingCalcs {
   const rpm   = parseFloat(rpmInvoice) || 0
   const ccm   = parseFloat(ccmInvoice) || 0
@@ -92,8 +84,8 @@ const MONTHS = [
 ]
 
 export function offsetMonth(offset: number): { year: number; month: number; label: string } {
-  const now = new Date()
-  const d   = new Date(now.getFullYear(), now.getMonth() + offset)
+  const now   = new Date()
+  const d     = new Date(now.getFullYear(), now.getMonth() + offset)
   const year  = d.getFullYear()
   const month = d.getMonth() + 1
   return { year, month, label: MONTHS[month - 1] + ' ' + year }

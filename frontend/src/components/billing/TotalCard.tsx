@@ -1,4 +1,10 @@
-import type { TotalRow } from '../../lib/billingCalcs'
+// TotalRow is owned by this component — no dependency on domain libs
+export interface TotalRow {
+  label:  string
+  value:  string
+  color?: string
+  bold?:  boolean
+}
 
 export interface TotalCardProps {
   rows: TotalRow[]
